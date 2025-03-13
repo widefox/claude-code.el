@@ -116,7 +116,7 @@ the speed of your machine."
 
 ;;;; Private util functions
 (defun claude-code--do-send-command (cmd)
-  "Send a command to Claude if Claude buffer exists.
+  "Send a command CMD to Claude if Claude buffer exists.
 
 After sending the command, move point to the end of the buffer."
   (if-let ((claude-code-buffer (get-buffer "*claude*")))
