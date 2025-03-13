@@ -81,7 +81,7 @@ This layout works best on wide screens.
 
 ### Font Configuration for Better Rendering
 
-Using a font with good Unicode support helps avoid flickering while Claude Code is rendering its thinking icons. [JuliaMono](https://juliamono.netlify.app/) works particularly well. You can add this function to `claude-code-start-hook`:
+Using a font with good Unicode support helps avoid flickering while Claude Code is rendering its thinking icons. [JuliaMono](https://juliamono.netlify.app/) works particularly well. If you want to use JuliaMono just for Claude Code but use a different font everywhere else you can add this function to `claude-code-start-hook`:
 
 ```elisp
 (defun sm-setup-claude-faces ()
