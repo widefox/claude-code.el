@@ -142,8 +142,7 @@ After sending the command, move point to the end of the buffer."
        eat-maximum-latency claude-code-max-latency)
       (run-hooks 'claude-code-start-hook))
     (display-buffer (get-buffer "*claude*"))
-    (select-window current-window)
-    (run-hooks 'claude-code-start-hook)))
+    (select-window current-window)))
 
 ;;;; Interactive Commands
 (defun claude-code (&optional arg)
