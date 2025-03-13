@@ -25,7 +25,7 @@ An Emacs interface for [Claude Code CLI](https://github.com/anthropics/claude-co
                    :files ("*.el" (:exclude "demo.gif")))
   :bind-keymap
   ("C-c c" . claude-code-command-map)
-  :hook ((claude-code-start . sm-setup-claude-faces))
+  :hook ((claude-code--start . sm-setup-claude-faces))
   :config
   (claude-code-mode))
 ```
@@ -45,7 +45,7 @@ The default prefix key for all Claude Code commands is `C-c c`. This can be cust
 - `claude-code-slash-commands` (`C-c c /`) - Access Claude slash commands menu
 - `claude-code-transient` (`C-c c m`) - Show all commands (transient menu)
 
-With a prefix arg, `claude-code-send-command` and `claude-code-send-command-with-context` will switch to the Claude terminal buffer after sending the command. 
+With a prefix arg, `claude-code`, `claude-code-current-directory`, `claude-code-send-command` and `claude-code-send-command-with-context` will switch to the Claude terminal buffer after sending the command. 
 
 ### Transient Menus
 

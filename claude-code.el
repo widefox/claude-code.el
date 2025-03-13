@@ -32,7 +32,6 @@
   :type 'hook
   :group 'claude-code)
 
-
 ;;;; Key bindings
 ;;;###autoload (autoload 'claude-code-command-map "claude-code")
 (defvar claude-code-command-map
@@ -100,21 +99,23 @@ After sending the command, move point to the end of the buffer."
         (display-buffer claude-code-buffer))
     (error "Claude is not running")))
 
-(defun claude-code-start (dir)
+(defun claude-code--start (dir &optional arg)
   "Start Claude in directory DIR."
   (require 'eat)
   (let ((default-directory dir)
         (current-window (selected-window))
         (buffer (get-buffer-create "*claude*")))
     (with-current-buffer buffer
-      (display-buffer (get-buffer "*claude*"))
+      (display-buffer buffer)
       (let ((process-adaptive-read-buffering nil))
         (eat-make "claude" "claude"))
       (eat-term-redisplay eat-terminal)
       (set-face-attribute 'nobreak-space nil :underline nil)
       (set-face-attribute 'eat-term-faint nil :foreground "#999999" :weight 'light)
       (run-hooks 'claude-code-start-hook))
-    (select-window current-window)))
+    (select-window current-window)
+    (when arg
+      (switch-to-buffer buffer))))
 
 ;;;; Interactive Commands
 (defun claude-code (&optional arg)
@@ -125,12 +126,12 @@ With prefix ARG, prompt for the project directory."
   (let* ((dir (if arg
                   (read-directory-name "Project directory: ")
                 (project-root (project-current t)))))
-    (claude-code-start dir)))
+    (claude-code--start dir arg)))
 
-(defun claude-code-current-directory ()
+(defun claude-code-current-directory (&optional arg)
   "Start Claude in the current directory."
-  (interactive)
-  (claude-code-start default-directory))
+  (interactive "P")
+  (claude-code--start default-directory arg))
 
 (defun claude-code-toggle ()
   "Show or hide the Claude window.
