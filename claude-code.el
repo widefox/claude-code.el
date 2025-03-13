@@ -32,32 +32,6 @@
   :type 'hook
   :group 'claude-code)
 
-(defcustom claude-code-startup-delay 0.035
-  "Delay in seconds before redisplaying terminal after startup.
-
-This allows the Claude Code terminal display to settle and prevents
-layout issues in the EAT window. The appropriate value may vary
-depending on the speed of your machine."
-  :type 'float
-  :group 'claude-code)
-
-(defcustom claude-code-min-latency 0.035
-  "Minimum latency in seconds for terminal updates in Claude sessions.
-
-This helps reduce flickering in the EAT window by controlling the minimum
-time between screen updates. The appropriate value may vary depending on
-the speed of your machine."
-  :type 'float
-  :group 'claude-code)
-
-(defcustom claude-code-max-latency 0.05
-  "Maximum latency in seconds for terminal updates in Claude sessions.
-
-This helps reduce flickering in the EAT window by controlling the maximum
-time between screen updates. The appropriate value may vary depending on
-the speed of your machine."
-  :type 'float
-  :group 'claude-code)
 
 ;;;; Key bindings
 ;;;###autoload (autoload 'claude-code-command-map "claude-code")
@@ -130,18 +104,16 @@ After sending the command, move point to the end of the buffer."
   "Start Claude in directory DIR."
   (require 'eat)
   (let ((default-directory dir)
-        (current-window (selected-window)))
-    (eat-make "claude" "claude")
-    (with-current-buffer "*claude*"
-      (sleep-for claude-code-startup-delay)
+        (current-window (selected-window))
+        (buffer (get-buffer-create "*claude*")))
+    (with-current-buffer buffer
+      (display-buffer (get-buffer "*claude*"))
+      (let ((process-adaptive-read-buffering nil))
+        (eat-make "claude" "claude"))
       (eat-term-redisplay eat-terminal)
       (set-face-attribute 'nobreak-space nil :underline nil)
       (set-face-attribute 'eat-term-faint nil :foreground "#999999" :weight 'light)
-      (setq
-       eat-minimum-latency claude-code-min-latency
-       eat-maximum-latency claude-code-max-latency)
       (run-hooks 'claude-code-start-hook))
-    (display-buffer (get-buffer "*claude*"))
     (select-window current-window)))
 
 ;;;; Interactive Commands

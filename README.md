@@ -61,11 +61,6 @@ For quick access to Claude slash commands like `/help`, `/clear`, or `/compact`,
 ;; Change the prefix key
 (setq claude-code-prefix-key "C-c C-a")
 
-;; Customize terminal display settings
-(setq claude-code-startup-delay 0.05)
-(setq claude-code-min-latency 0.04)
-(setq claude-code-max-latency 0.06)
-
 ;; Add hooks to run after Claude is started
 (add-hook 'claude-code-start-hook 'my-claude-setup-function)
 ```
@@ -124,7 +119,6 @@ This [demo](./demo.gif) shows claude-code.el in action, including toggling the C
 
 - Currently, `claude-code.el` only supports running one Claude Code process at a time.
 - `claude-code.el` only supports using [eat](https://codeberg.org/akib/emacs-eat) for the Claude Code terminal window. Eat provides better rendering with less flickering and visual artifacts compared to other terminal emulators like ansi-term and vterm in testing.
-- Some flickering may still occur during Claude's thinking animation, even after tweaking `claude-code-min-latency` and `claude-code-max-latency` values.
 
 ## Contributing
 
