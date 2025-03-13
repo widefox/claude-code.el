@@ -1,0 +1,10 @@
+# Emacs backup files
+*~
+\#*\#
+.\#*
+
+# Compiled Emacs Lisp files
+*.elc
+
+# Other common patterns
+.DS_Store
