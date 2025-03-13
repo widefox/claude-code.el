@@ -147,7 +147,7 @@ After sending the command, move point to the end of the buffer."
 
 ;;;; Interactive Commands
 (defun claude-code (&optional arg)
-  "Start Claude in an eat terminal and enable claude-code-mode.
+  "Start Claude in an eat terminal and enable `claude-code-mode'.
 
 With prefix ARG, prompt for the project directory."
   (interactive "P")
@@ -184,7 +184,7 @@ If the Claude buffer doesn't exist, create it."
 (defun claude-code-send-command (cmd &optional arg)
   "Read a Claude command from the minibuffer and send it.
 
-With prefix ARG, switch to the Claude buffer after sending the command."
+With prefix ARG, switch to the Claude buffer after sending CMD."
   (interactive "sClaude command: \nP")
   (claude-code--do-send-command cmd)
   (when arg
@@ -194,7 +194,7 @@ With prefix ARG, switch to the Claude buffer after sending the command."
   "Read a Claude command and send it with current file and line context.
 
 If region is active, include region line numbers.
-With prefix ARG, switch to the Claude buffer after sending the command."
+With prefix ARG, switch to the Claude buffer after sending CMD."
   (interactive "sClaude command: \nP")
   (let* ((file-name (buffer-file-name))
          (line-info (if (use-region-p)
