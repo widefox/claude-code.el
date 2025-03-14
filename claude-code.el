@@ -48,6 +48,7 @@
   "Keymap for Claude commands.")
 
 ;;;; Transient Menus
+;;;###autoload
 (transient-define-prefix claude-code-transient ()
   "Claude command menu."
   ["Claude Commands"
@@ -59,6 +60,7 @@
     ("x" "Send command with context" claude-code-send-command-with-context)
     ("/" "Slash Commands" claude-code-slash-commands)]])
 
+;;;###autoload
 (transient-define-prefix claude-code-slash-commands ()
   "Claude slash commands menu."
   ["Slash Commands"
@@ -118,6 +120,7 @@ After sending the command, move point to the end of the buffer."
       (switch-to-buffer buffer))))
 
 ;;;; Interactive Commands
+;;;###autoload
 (defun claude-code (&optional arg)
   "Start Claude in an eat terminal and enable `claude-code-mode'.
 
@@ -128,11 +131,13 @@ With prefix ARG, prompt for the project directory."
                 (project-root (project-current t)))))
     (claude-code--start dir arg)))
 
+;;;###autoload
 (defun claude-code-current-directory (&optional arg)
   "Start Claude in the current directory."
   (interactive "P")
   (claude-code--start default-directory arg))
 
+;;;###autoload
 (defun claude-code-toggle ()
   "Show or hide the Claude window.
 
@@ -145,6 +150,7 @@ If the Claude buffer doesn't exist, create it."
           (display-buffer claude-code-buffer))
       (error "Claude is not running"))))
 
+;;;###autoload
 (defun claude-code-kill ()
   "Kill Claude process and close its window."
   (interactive)
@@ -153,6 +159,7 @@ If the Claude buffer doesn't exist, create it."
       (eat-kill-process)
       (kill-buffer claude-code-buffer))))
 
+;;;###autoload
 (defun claude-code-send-command (cmd &optional arg)
   "Read a Claude command from the minibuffer and send it.
 
@@ -162,6 +169,7 @@ With prefix ARG, switch to the Claude buffer after sending CMD."
   (when arg
     (switch-to-buffer "*claude*")))
 
+;;;###autoload
 (defun claude-code-send-command-with-context (cmd &optional arg)
   "Read a Claude command and send it with current file and line context.
 
