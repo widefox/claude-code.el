@@ -44,6 +44,13 @@ is displayed before Claude is fully initialized."
   :type 'number
   :group 'claude-code)
 
+(defcustom claude-code-large-buffer-threshold 50000
+  "Size threshold in characters above which buffers are considered \"large\".
+When sending a buffer to Claude with `claude-code-send-region` and no
+region is active, prompt for confirmation if buffer size exceeds this value."
+  :type 'integer
+  :group 'claude-code)
+
 ;;;; Key bindings
 ;;;###autoload (autoload 'claude-code-command-map "claude-code")
 (defvar claude-code-command-map
@@ -58,6 +65,7 @@ is displayed before Claude is fully initialized."
     (define-key map "m" 'claude-code-transient)
     (define-key map "y" 'claude-code-send-return)
     (define-key map "n" 'claude-code-send-escape)
+    (define-key map "r" 'claude-code-send-region)
     map)
   "Keymap for Claude commands.")
 
@@ -72,6 +80,7 @@ is displayed before Claude is fully initialized."
     ("k" "Kill Claude" claude-code-kill)]
    ["Send Commands to Claude" ("s" "Send command" claude-code-send-command)
     ("x" "Send command with context" claude-code-send-command-with-context)
+    ("r" "Send region or buffer" claude-code-send-region)
     ("y" "Send <return> to Claude (\"Yes\")" claude-code-send-return)
     ("n" "Send <escape> to Claude (\"No\")" claude-code-send-escape)
     ("/" "Slash Commands" claude-code-slash-commands)]])
@@ -165,6 +174,25 @@ With prefix ARG, prompt for the project directory."
                   (read-directory-name "Project directory: ")
                 (project-root (project-current t)))))
     (claude-code--start dir arg)))
+
+;;;###autoload
+(defun claude-code-send-region (&optional arg)
+  "Send the current region to Claude.
+If no region is active, send the entire buffer if it's not too large.
+For large buffers, ask for confirmation first.
+
+With prefix ARG, switch to the Claude buffer after sending the text."
+  (interactive "P")
+  (let ((text (if (use-region-p)
+                 (buffer-substring-no-properties (region-beginning) (region-end))
+               (if (> (buffer-size) claude-code-large-buffer-threshold)
+                   (when (yes-or-no-p "Buffer is large. Send anyway? ")
+                     (buffer-substring-no-properties (point-min) (point-max)))
+                 (buffer-substring-no-properties (point-min) (point-max))))))
+    (when text
+      (claude-code--do-send-command text)
+      (when arg
+        (switch-to-buffer "*claude*")))))
 
 ;;;###autoload
 (defun claude-code-current-directory (&optional arg)

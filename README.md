@@ -42,6 +42,7 @@ The default prefix key for all Claude Code commands is `C-c c`. This can be cust
 - `claude-code-kill` (`C-c c k`) - Kill Claude session
 - `claude-code-send-command` (`C-c c s`) - Send command to Claude
 - `claude-code-send-command-with-context` (`C-c c x`) - Send command with current file and line context
+- `claude-code-send-region` (`C-c c r`) - Send the current region or buffer to Claude
 - `claude-code-slash-commands` (`C-c c /`) - Access Claude slash commands menu
 - `claude-code-transient` (`C-c c m`) - Show all commands (transient menu)
 - `claude-code-send-return` (`C-c c y`) - Send return key to Claude (useful for confirming with Claude without switching to the REPL buffer)
@@ -69,6 +70,11 @@ For quick access to Claude slash commands like `/help`, `/clear`, or `/compact`,
 ;; Adjust initialization delay (default is 0.1 seconds)
 ;; This helps prevent terminal layout issues if the buffer is displayed before Claude is fully ready
 (setq claude-code-startup-delay 0.2)
+
+;; Configure the buffer size threshold for confirmation prompt (default is 50000 characters)
+;; If a buffer is larger than this threshold, claude-code-send-region will ask for confirmation
+;; before sending the entire buffer to Claude
+(setq claude-code-large-buffer-threshold 50000)
 ```
 
 ### Customizing Window Position
