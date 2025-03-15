@@ -85,32 +85,11 @@ This layout works best on wide screens.
 
 ### Font Configuration for Better Rendering
 
-Using a font with good Unicode support helps avoid flickering while Claude Code is rendering its thinking icons. [JuliaMono](https://juliamono.netlify.app/) works particularly well. If you want to use JuliaMono just for Claude Code but use a different font everywhere else you can add this function to `claude-code-start-hook`:
+Using a font with good Unicode support helps avoid flickering while Claude Code is rendering its thinking icons. [JuliaMono](https://juliamono.netlify.app/) works particularly well. If you want to use JuliaMono just for the Claude Code REPL but use a different font everywhere else you can customize the `claude-code-repl-face`:
 
 ```elisp
-(defun sm-setup-claude-faces ()
-  (let ((attrs '(:family "JuliaMono" :weight light :height 140)))
-    (dolist (face '(eat-shell-prompt-annotation-running
-                    eat-shell-prompt-annotation-success
-                    eat-shell-prompt-annotation-failure
-                    eat-term-bold
-                    eat-term-faint
-                    eat-term-italic
-                    eat-term-slow-blink
-                    eat-term-fast-blink))
-      (apply 'set-face-attribute face nil attrs))
-    (dotimes (i 10)
-      (apply 'set-face-attribute (intern (format "eat-term-font-%d" i)) nil attrs))
-    (dotimes (i 255)
-      (apply 'set-face-attribute (intern (format "eat-term-color-%d" i)) nil attrs))
-    (apply 'buffer-face-set attrs))
-  (setq line-spacing 0.25))
-```
-
-Then enable it in your configuration:
-
-```elisp
-(add-hook 'claude-code-start-hook 'sm-setup-claude-faces)
+(custom-set-faces
+   '(claude-code-repl-face ((t (:family "JuliaMono")))))
 ```
 
 ## Demo

@@ -21,6 +21,11 @@
   "Claude AI interface for Emacs."
   :group 'tools)
 
+(defface claude-code-repl-face
+  '((t :inherit default))
+    "Face for Claude REPL"
+    :group 'claude-code)
+
 ;;;###autoload (autoload 'claude-code-prefix-key "claude-code")
 (defcustom claude-code-prefix-key "C-c c"
   "Prefix key for Claude commands."
@@ -108,17 +113,35 @@ After sending the command, move point to the end of the buffer."
         (display-buffer claude-code-buffer))
     (error "Claude is not running")))
 
+(defun claude-code--setup-repl-faces ()
+  (dolist (face '(eat-shell-prompt-annotation-running
+                  eat-shell-prompt-annotation-success
+                  eat-shell-prompt-annotation-failure
+                  eat-term-bold
+                  eat-term-faint
+                  eat-term-italic
+                  eat-term-slow-blink
+                  eat-term-fast-blink))
+    (funcall 'face-remap-add-relative face :inherit 'claude-code-repl-face))
+  (dotimes (i 10)
+    (let ((face (intern (format "eat-term-font-%d" i))))
+      (funcall 'face-remap-add-relative face :inherit 'claude-code-repl-face)))
+  (dotimes (i 10)
+    (let ((face (intern (format "eat-term-font-%d" i))))
+      (funcall 'face-remap-add-relative face :inherit 'claude-code-repl-face)))
+  (buffer-face-set :inherit 'claude-code-repl-face)
+  (face-remap-add-relative 'nobreak-space :underline nil)
+  (face-remap-add-relative 'eat-term-faint :foreground "#999999" :weight 'light))
+
 (defun claude-code--start (dir &optional arg)
   "Start Claude in directory DIR."
   (require 'eat)
   (let ((default-directory dir)
         (buffer (get-buffer-create "*claude*")))
     (with-current-buffer buffer
-
       (let ((process-adaptive-read-buffering nil))
         (eat-make "claude" "claude"))
-      (set-face-attribute 'nobreak-space nil :underline nil)
-      (set-face-attribute 'eat-term-faint nil :foreground "#999999" :weight 'light)
+      (claude-code--setup-repl-faces)
       (run-hooks 'claude-code-start-hook)
 
       ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
