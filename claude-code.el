@@ -32,6 +32,13 @@
   :type 'hook
   :group 'claude-code)
 
+(defcustom claude-code-startup-delay 0.1
+  "Delay in seconds after starting Claude before displaying buffer.
+This helps fix terminal layout issues that can occur if the buffer
+is displayed before Claude is fully initialized."
+  :type 'number
+  :group 'claude-code)
+
 ;;;; Key bindings
 ;;;###autoload (autoload 'claude-code-command-map "claude-code")
 (defvar claude-code-command-map
@@ -105,17 +112,18 @@ After sending the command, move point to the end of the buffer."
   "Start Claude in directory DIR."
   (require 'eat)
   (let ((default-directory dir)
-        (current-window (selected-window))
         (buffer (get-buffer-create "*claude*")))
     (with-current-buffer buffer
-      (display-buffer buffer)
+
       (let ((process-adaptive-read-buffering nil))
         (eat-make "claude" "claude"))
-      (eat-term-redisplay eat-terminal)
       (set-face-attribute 'nobreak-space nil :underline nil)
       (set-face-attribute 'eat-term-faint nil :foreground "#999999" :weight 'light)
-      (run-hooks 'claude-code-start-hook))
-    (select-window current-window)
+      (run-hooks 'claude-code-start-hook)
+
+      ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
+      (sleep-for claude-code-startup-delay)
+      (display-buffer buffer))
     (when arg
       (switch-to-buffer buffer))))
 

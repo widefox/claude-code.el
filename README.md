@@ -63,6 +63,10 @@ For quick access to Claude slash commands like `/help`, `/clear`, or `/compact`,
 
 ;; Add hooks to run after Claude is started
 (add-hook 'claude-code-start-hook 'my-claude-setup-function)
+
+;; Adjust initialization delay (default is 0.1 seconds)
+;; This helps prevent terminal layout issues if the buffer is displayed before Claude is fully ready
+(setq claude-code-startup-delay 0.2)
 ```
 
 ### Customizing Window Position
