@@ -56,6 +56,7 @@ is displayed before Claude is fully initialized."
     (define-key map "x" 'claude-code-send-command-with-context)
     (define-key map "/" 'claude-code-slash-commands)
     (define-key map "m" 'claude-code-transient)
+    (define-key map "" 'claude-code-send-return)
     map)
   "Keymap for Claude commands.")
 
@@ -70,7 +71,8 @@ is displayed before Claude is fully initialized."
     ("k" "Kill Claude" claude-code-kill)]
    ["Send Commands to Claude" ("s" "Send command" claude-code-send-command)
     ("x" "Send command with context" claude-code-send-command-with-context)
-    ("/" "Slash Commands" claude-code-slash-commands)]])
+    ("/" "Slash Commands" claude-code-slash-commands)
+    ("y" "Send <return> to Claude" claude-code-slash-commands)]])
 
 ;;;###autoload
 (transient-define-prefix claude-code-slash-commands ()
@@ -222,6 +224,15 @@ With prefix ARG, switch to the Claude buffer after sending CMD."
     (claude-code--do-send-command cmd-with-context)
     (when arg
       (switch-to-buffer "*claude*"))))
+
+;;;###autoload
+(defun claude-code-send-return ()
+  "Send <return> to the Claude Code REPL.
+
+This is useful for saying Yes when Claude asks for confirmation without
+having to switch to the REPL buffer."
+  (interactive)
+  (claude-code--do-send-command ""))
 
 ;;;; Mode definition
 ;;;###autoload
