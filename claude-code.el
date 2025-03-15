@@ -23,7 +23,7 @@
 
 (defface claude-code-repl-face
   '((t :inherit default))
-    "Face for Claude REPL"
+    "Face for Claude REPL."
     :group 'claude-code)
 
 ;;;###autoload (autoload 'claude-code-prefix-key "claude-code")
@@ -39,13 +39,15 @@
 
 (defcustom claude-code-startup-delay 0.1
   "Delay in seconds after starting Claude before displaying buffer.
+
 This helps fix terminal layout issues that can occur if the buffer
 is displayed before Claude is fully initialized."
   :type 'number
   :group 'claude-code)
 
-(defcustom claude-code-large-buffer-threshold 50000
+(defcustom claude-code-large-buffer-threshold 1000
   "Size threshold in characters above which buffers are considered \"large\".
+
 When sending a buffer to Claude with `claude-code-send-region` and no
 region is active, prompt for confirmation if buffer size exceeds this value."
   :type 'integer
@@ -178,17 +180,18 @@ With prefix ARG, prompt for the project directory."
 ;;;###autoload
 (defun claude-code-send-region (&optional arg)
   "Send the current region to Claude.
+
 If no region is active, send the entire buffer if it's not too large.
 For large buffers, ask for confirmation first.
 
 With prefix ARG, switch to the Claude buffer after sending the text."
   (interactive "P")
   (let ((text (if (use-region-p)
-                 (buffer-substring-no-properties (region-beginning) (region-end))
-               (if (> (buffer-size) claude-code-large-buffer-threshold)
-                   (when (yes-or-no-p "Buffer is large. Send anyway? ")
-                     (buffer-substring-no-properties (point-min) (point-max)))
-                 (buffer-substring-no-properties (point-min) (point-max))))))
+                  (buffer-substring-no-properties (region-beginning) (region-end))
+                (if (> (buffer-size) claude-code-large-buffer-threshold)
+                    (when (yes-or-no-p "Buffer is large. Send anyway? ")
+                      (buffer-substring-no-properties (point-min) (point-max)))
+                  (buffer-substring-no-properties (point-min) (point-max))))))
     (when text
       (claude-code--do-send-command text)
       (when arg
