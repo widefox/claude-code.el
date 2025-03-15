@@ -44,7 +44,8 @@ The default prefix key for all Claude Code commands is `C-c c`. This can be cust
 - `claude-code-send-command-with-context` (`C-c c x`) - Send command with current file and line context
 - `claude-code-slash-commands` (`C-c c /`) - Access Claude slash commands menu
 - `claude-code-transient` (`C-c c m`) - Show all commands (transient menu)
-- `claude-code-send-return` (`C-c c RET`) - Send return key to Claude (useful for confirming with Claude without switching to the REPL buffer)
+- `claude-code-send-return` (`C-c c y`) - Send return key to Claude (useful for confirming with Claude without switching to the REPL buffer)
+- `claude-code-send-escape` (`C-c c n`) - Send escape key to Claude (useful for declining with Claude without switching to the REPL buffer)
 
 With a prefix arg, `claude-code`, `claude-code-current-directory`, `claude-code-send-command` and `claude-code-send-command-with-context` will switch to the Claude terminal buffer after sending the command. 
 

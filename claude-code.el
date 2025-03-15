@@ -56,7 +56,8 @@ is displayed before Claude is fully initialized."
     (define-key map "x" 'claude-code-send-command-with-context)
     (define-key map "/" 'claude-code-slash-commands)
     (define-key map "m" 'claude-code-transient)
-    (define-key map "" 'claude-code-send-return)
+    (define-key map "y" 'claude-code-send-return)
+    (define-key map "n" 'claude-code-send-escape)
     map)
   "Keymap for Claude commands.")
 
@@ -71,8 +72,9 @@ is displayed before Claude is fully initialized."
     ("k" "Kill Claude" claude-code-kill)]
    ["Send Commands to Claude" ("s" "Send command" claude-code-send-command)
     ("x" "Send command with context" claude-code-send-command-with-context)
-    ("/" "Slash Commands" claude-code-slash-commands)
-    ("y" "Send <return> to Claude" claude-code-slash-commands)]])
+    ("y" "Send <return> to Claude (\"Yes\")" claude-code-send-return)
+    ("n" "Send <escape> to Claude (\"No\")" claude-code-send-escape)
+    ("/" "Slash Commands" claude-code-slash-commands)]])
 
 ;;;###autoload
 (transient-define-prefix claude-code-slash-commands ()
@@ -233,6 +235,19 @@ This is useful for saying Yes when Claude asks for confirmation without
 having to switch to the REPL buffer."
   (interactive)
   (claude-code--do-send-command ""))
+
+;;;###autoload
+(defun claude-code-send-escape ()
+  "Send <escape> to the Claude Code REPL.
+
+This is useful for saying \"No\" when Claude asks for confirmation without
+having to switch to the REPL buffer."
+  (interactive)
+  (if-let ((claude-code-buffer (get-buffer "*claude*")))
+      (with-current-buffer claude-code-buffer
+        (eat-term-send-string eat-terminal (kbd "ESC"))
+        (display-buffer claude-code-buffer))
+    (error "Claude is not running")))
 
 ;;;; Mode definition
 ;;;###autoload
