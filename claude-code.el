@@ -26,6 +26,11 @@
     "Face for Claude REPL."
     :group 'claude-code)
 
+(defcustom claude-code-term-name "xterm-256color"
+  "Terminal type to use for Claude REPL."
+  :type 'string
+  :group 'claude-code)
+
 ;;;###autoload (autoload 'claude-code-prefix-key "claude-code")
 (defcustom claude-code-prefix-key "C-c c"
   "Prefix key for Claude commands."
@@ -154,6 +159,7 @@ After sending the command, move point to the end of the buffer."
   (let ((default-directory dir)
         (buffer (get-buffer-create "*claude*")))
     (with-current-buffer buffer
+      (setq eat-term-name claude-code-term-name)
       (let ((process-adaptive-read-buffering nil))
         (eat-make "claude" "claude"))
       (claude-code--setup-repl-faces)

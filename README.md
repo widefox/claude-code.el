@@ -64,6 +64,9 @@ For quick access to Claude slash commands like `/help`, `/clear`, or `/compact`,
 ;; Change the prefix key
 (setq claude-code-prefix-key "C-c C-a")
 
+;; Change the terminal type (default is "xterm-256color")
+(setq claude-code-term-name "xterm-256color")
+
 ;; Add hooks to run after Claude is started
 (add-hook 'claude-code-start-hook 'my-claude-setup-function)
 
@@ -71,10 +74,10 @@ For quick access to Claude slash commands like `/help`, `/clear`, or `/compact`,
 ;; This helps prevent terminal layout issues if the buffer is displayed before Claude is fully ready
 (setq claude-code-startup-delay 0.2)
 
-;; Configure the buffer size threshold for confirmation prompt (default is 50000 characters)
+;; Configure the buffer size threshold for confirmation prompt (default is 1000 characters)
 ;; If a buffer is larger than this threshold, claude-code-send-region will ask for confirmation
 ;; before sending the entire buffer to Claude
-(setq claude-code-large-buffer-threshold 50000)
+(setq claude-code-large-buffer-threshold 1000)
 ```
 
 ### Customizing Window Position
