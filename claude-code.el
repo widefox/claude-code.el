@@ -8,7 +8,7 @@
 
 ;;; Commentary:
 
-;; An Emacs interface to Claude Code. This package provides convenient
+;; An Emacs interface to Claude Code.  This package provides convenient
 ;; ways to interact with Claude from within Emacs, including sending
 ;; commands, toggling the Claude window, and accessing slash commands.
 
@@ -134,6 +134,10 @@ After sending the command, move point to the end of the buffer."
     (error "Claude is not running")))
 
 (defun claude-code--setup-repl-faces ()
+  "Setup faces for the Claude REPL buffer.
+
+Applies the `claude-code-repl-face' to all terminal-related faces
+for consistent appearance."
   (dolist (face '(eat-shell-prompt-annotation-running
                   eat-shell-prompt-annotation-success
                   eat-shell-prompt-annotation-failure
@@ -154,7 +158,9 @@ After sending the command, move point to the end of the buffer."
   (face-remap-add-relative 'eat-term-faint :foreground "#999999" :weight 'light))
 
 (defun claude-code--start (dir &optional arg)
-  "Start Claude in directory DIR."
+  "Start Claude in directory DIR.
+
+With non-nil ARG, switch to the Claude buffer after starting."
   (require 'eat)
   (let ((default-directory dir)
         (buffer (get-buffer-create "*claude*")))
@@ -195,7 +201,7 @@ With prefix ARG, switch to the Claude buffer after sending the text."
   (let ((text (if (use-region-p)
                   (buffer-substring-no-properties (region-beginning) (region-end))
                 (if (> (buffer-size) claude-code-large-buffer-threshold)
-                    (when (yes-or-no-p "Buffer is large. Send anyway? ")
+                    (when (yes-or-no-p "Buffer is large.  Send anyway? ")
                       (buffer-substring-no-properties (point-min) (point-max)))
                   (buffer-substring-no-properties (point-min) (point-max))))))
     (when text
@@ -205,7 +211,9 @@ With prefix ARG, switch to the Claude buffer after sending the text."
 
 ;;;###autoload
 (defun claude-code-current-directory (&optional arg)
-  "Start Claude in the current directory."
+  "Start Claude in the current directory.
+
+With non-nil ARG, switch to the Claude buffer after starting."
   (interactive "P")
   (claude-code--start default-directory arg))
 
