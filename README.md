@@ -64,7 +64,9 @@ For quick access to Claude slash commands like `/help`, `/clear`, or `/compact`,
 ;; Change the prefix key
 (setq claude-code-prefix-key "C-c C-a")
 
-;; Change the terminal type (default is "xterm-256color")
+;; Set terminal type for the Claude terminal emulation (default is "xterm-256color")
+;; This determines terminal capabilities like color support
+;; See the documentation for eat-term-name for more information
 (setq claude-code-term-name "xterm-256color")
 
 ;; Change the path to the Claude executable (default is "claude")
