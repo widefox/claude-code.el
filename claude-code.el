@@ -23,9 +23,9 @@
   :group 'tools)
 
 (defface claude-code-repl-face
-  '((t :inherit default))
-    "Face for Claude REPL."
-    :group 'claude-code)
+  nil
+  "Face for Claude REPL."
+  :group 'claude-code)
 
 (defcustom claude-code-term-name "xterm-256color"
   "Terminal type to use for Claude REPL."
