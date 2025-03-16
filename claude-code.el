@@ -15,6 +15,7 @@
 ;;; Code:
 
 (require 'transient)
+(require 'project)
 
 ;;;; Customization options
 (defgroup claude-code nil
@@ -57,6 +58,13 @@ When sending a buffer to Claude with `claude-code-send-region` and no
 region is active, prompt for confirmation if buffer size exceeds this value."
   :type 'integer
   :group 'claude-code)
+
+;; Forward declare variables to avoid compilation warnings
+(defvar eat-terminal)
+(defvar eat-term-name)
+(declare-function eat-term-send-string "eat")
+(declare-function eat-kill-process "eat")
+(declare-function eat-make "eat")
 
 ;;;; Key bindings
 ;;;###autoload (autoload 'claude-code-command-map "claude-code")
@@ -161,7 +169,9 @@ for consistent appearance."
   "Start Claude in directory DIR.
 
 With non-nil ARG, switch to the Claude buffer after starting."
+  ;; Forward declare variables to avoid compilation warnings
   (require 'eat)
+  
   (let ((default-directory dir)
         (buffer (get-buffer-create "*claude*")))
     (with-current-buffer buffer
@@ -186,7 +196,7 @@ With prefix ARG, prompt for the project directory."
   (interactive "P")
   (let* ((dir (if arg
                   (read-directory-name "Project directory: ")
-                (project-root (project-current t)))))
+                (funcall #'project-root (project-current t)))))
     (claude-code--start dir arg)))
 
 ;;;###autoload
