@@ -67,6 +67,14 @@ For quick access to Claude slash commands like `/help`, `/clear`, or `/compact`,
 ;; Change the terminal type (default is "xterm-256color")
 (setq claude-code-term-name "xterm-256color")
 
+;; Change the path to the Claude executable (default is "claude")
+;; Useful if Claude is not in your PATH or you want to use a specific version
+(setq claude-code-program "/usr/local/bin/claude")
+
+;; Set command line arguments for Claude
+;; For example, to enable verbose output
+(setq claude-code-program-switches '("--verbose"))
+
 ;; Add hooks to run after Claude is started
 (add-hook 'claude-code-start-hook 'my-claude-setup-function)
 

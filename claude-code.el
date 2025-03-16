@@ -59,6 +59,18 @@ region is active, prompt for confirmation if buffer size exceeds this value."
   :type 'integer
   :group 'claude-code)
 
+(defcustom claude-code-program "claude"
+  "Program to run when starting Claude.
+This is passed as the PROGRAM parameter to `eat-make`."
+  :type 'string
+  :group 'claude-code)
+
+(defcustom claude-code-program-switches nil
+  "List of command line switches to pass to the Claude program.
+These are passed as SWITCHES parameters to `eat-make`."
+  :type '(repeat string)
+  :group 'claude-code)
+
 ;; Forward declare variables to avoid compilation warnings
 (defvar eat-terminal)
 (defvar eat-term-name)
@@ -177,7 +189,7 @@ With non-nil ARG, switch to the Claude buffer after starting."
     (with-current-buffer buffer
       (setq eat-term-name claude-code-term-name)
       (let ((process-adaptive-read-buffering nil))
-        (eat-make "claude" "claude"))
+        (apply #'eat-make "claude" claude-code-program nil claude-code-program-switches))
       (claude-code--setup-repl-faces)
       (run-hooks 'claude-code-start-hook)
 
