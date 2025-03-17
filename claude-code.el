@@ -257,10 +257,12 @@ If the Claude buffer doesn't exist, create it."
 (defun claude-code-kill ()
   "Kill Claude process and close its window."
   (interactive)
-  (when-let ((claude-code-buffer (get-buffer "*claude*")))
-    (with-current-buffer claude-code-buffer
-      (eat-kill-process)
-      (kill-buffer claude-code-buffer))))
+  (if-let ((claude-code-buffer (get-buffer "*claude*")))
+      (progn (with-current-buffer claude-code-buffer
+               (eat-kill-process)
+               (kill-buffer claude-code-buffer))
+             (message "Claude killed"))
+    (error "Claude is not running")))
 
 ;;;###autoload
 (defun claude-code-send-command (cmd &optional arg)
