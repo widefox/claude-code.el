@@ -17,6 +17,19 @@ An Emacs interface for [Claude Code CLI](https://github.com/anthropics/claude-co
 - [Claude Code CLI](https://github.com/anthropics/claude-code) installed and configured
 - Required Emacs packages: transient (0.7.5+), eat (0.9.2+)
 
+### Using package.el with vc-install (Emacs 30+)
+
+```elisp
+;; Install directly from GitHub
+(package-vc-install '(claude-code :url "https://github.com/stevemolitor/claude-code.el"))
+
+;; Then in your init.el:
+(require 'claude-code)
+(setq claude-code-prefix-key "C-c c")
+(define-key global-map (kbd "C-c c") claude-code-command-map)
+(claude-code-mode)
+```
+
 ### Using straight.el
 
 ```elisp
