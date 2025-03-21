@@ -189,6 +189,7 @@ With non-nil ARG, switch to the Claude buffer after starting."
   (let ((default-directory dir)
         (buffer (get-buffer-create "*claude*")))
     (with-current-buffer buffer
+      (cd dir)
       (setq-local eat-term-name claude-code-term-name)
       (let ((process-adaptive-read-buffering nil))
         (apply #'eat-make "claude" claude-code-program nil claude-code-program-switches))
