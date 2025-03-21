@@ -292,7 +292,8 @@ With prefix ARG, switch to the Claude buffer after sending CMD."
 If region is active, include region line numbers.
 With prefix ARG, switch to the Claude buffer after sending CMD."
   (interactive "sClaude command: \nP")
-  (let* ((file-name (buffer-file-name))
+  (let* ((file-name (when (buffer-file-name)
+                        (file-relative-name (buffer-file-name) (project-root (project-current t)))))
          (line-info (if (use-region-p)
                         (format "Lines: %d-%d"
                                 (line-number-at-pos (region-beginning))
@@ -301,7 +302,7 @@ With prefix ARG, switch to the Claude buffer after sending CMD."
          (cmd-with-context (if file-name
                                (format "%s\nContext: File: %s, %s"
                                        cmd
-                                       (file-name-nondirectory file-name)
+                                       file-name
                                        line-info)
                              cmd)))
     (claude-code--do-send-command cmd-with-context)
