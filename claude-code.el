@@ -85,6 +85,7 @@ These are passed as SWITCHES parameters to `eat-make`."
     (define-key map "c" 'claude-code)
     (define-key map "d" 'claude-code-current-directory)
     (define-key map "t" 'claude-code-toggle)
+    (define-key map "b" 'claude-code-switch-to-buffer)
     (define-key map "k" 'claude-code-kill)
     (define-key map "s" 'claude-code-send-command)
     (define-key map "x" 'claude-code-send-command-with-context)
@@ -104,6 +105,7 @@ These are passed as SWITCHES parameters to `eat-make`."
    ["Manage Claude" ("c" "Start Claude" claude-code)
     ("d" "Start Claude in current directory" claude-code-current-directory)
     ("t" "Toggle claude window" claude-code-toggle)
+    ("b" "Switch to Claude buffer" claude-code-switch-to-buffer)
     ("k" "Kill Claude" claude-code-kill)]
    ["Send Commands to Claude" ("s" "Send command" claude-code-send-command)
     ("x" "Send command with context" claude-code-send-command-with-context)
@@ -252,6 +254,14 @@ If the Claude buffer doesn't exist, create it."
             (delete-window (get-buffer-window claude-code-buffer))
           (display-buffer claude-code-buffer))
       (error "Claude is not running"))))
+
+;;;###autoload
+(defun claude-code-switch-to-buffer ()
+  "Switch to the Claude buffer if it exists."
+  (interactive)
+  (if-let ((claude-code-buffer (get-buffer "*claude*")))
+      (switch-to-buffer claude-code-buffer)
+    (error "Claude is not running")))
 
 ;;;###autoload
 (defun claude-code-kill ()

@@ -52,6 +52,7 @@ The default prefix key for all Claude Code commands is `C-c c`. This can be cust
 - `claude-code` (`C-c c c`) - Start Claude in the current project root
 - `claude-code-current-directory` (`C-c c d`) - Start Claude in the current directory
 - `claude-code-toggle` (`C-c c t`) - Toggle Claude window
+- `claude-code-switch-to-buffer` (`C-c c b`) - Switch to the Claude buffer
 - `claude-code-kill` (`C-c c k`) - Kill Claude session
 - `claude-code-send-command` (`C-c c s`) - Send command to Claude
 - `claude-code-send-command-with-context` (`C-c c x`) - Send command with current file and line context
