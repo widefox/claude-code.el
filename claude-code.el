@@ -15,6 +15,7 @@
 
 (require 'transient)
 (require 'project)
+(require 'cl-lib)
 
 ;;;; Customization options
 (defgroup claude-code nil
@@ -70,6 +71,12 @@ These are passed as SWITCHES parameters to `eat-make`."
 (declare-function eat-term-send-string "eat")
 (declare-function eat-kill-process "eat")
 (declare-function eat-make "eat")
+
+;; Forward declare flycheck functions
+(declare-function flycheck-overlay-errors-at "flycheck")
+(declare-function flycheck-error-filename "flycheck")
+(declare-function flycheck-error-line "flycheck")
+(declare-function flycheck-error-message "flycheck")
 
 ;;;; Key bindings
 ;;;###autoload (autoload 'claude-code-command-map "claude-code")
@@ -199,22 +206,27 @@ With non-nil ARG, switch to the Claude buffer after starting."
       (switch-to-buffer buffer))))
 
 (defun claude--format-flycheck-errors-at-point ()
-  "Format the flycheck errors at point as a string with file and line numbers."
+  "Format the flycheck errors at point as a string with file and line numbers.
+Returns a string with the errors or a message if flycheck is not available."
   (interactive)
-  (let ((errors (flycheck-overlay-errors-at (point)))
-        (result ""))
-    (if (not errors)
-        "No errors at point"
-      (dolist (err errors)
-        (let ((file (flycheck-error-filename err))
-              (line (flycheck-error-line err))
-              (msg (flycheck-error-message err)))
-          (setq result (concat result
-                               (format "%s:%d: %s\n"
-                                       file
-                                       line
-                                       msg)))))
-      (string-trim-right result))))
+  (if (not (featurep 'flycheck))
+      "Flycheck is not available"
+    (if (not (bound-and-true-p flycheck-mode))
+        "Flycheck mode is not enabled in this buffer"
+      (let ((errors (flycheck-overlay-errors-at (point)))
+            (result ""))
+        (if (not errors)
+            "No errors at point"
+          (dolist (err errors)
+            (let ((file (flycheck-error-filename err))
+                  (line (flycheck-error-line err))
+                  (msg (flycheck-error-message err)))
+              (setq result (concat result
+                                   (format "%s:%d: %s\n"
+                                           file
+                                           line
+                                           msg)))))
+          (string-trim-right result))))))
 
 ;;;; Interactive Commands
 ;;;###autoload
@@ -236,7 +248,7 @@ If no region is active, send the entire buffer if it's not too large.
 For large buffers, ask for confirmation first.
 
 With prefix ARG, prompt for instructions to add to the text before
-sending.   With two prefix ARGs (C-u C-u), both add instructions and
+sending. With two prefix ARGs (C-u C-u), both add instructions and
 switch to Claude buffer."
   (interactive "P")
   (let* ((text (if (use-region-p)
@@ -359,20 +371,26 @@ having to switch to the REPL buffer."
 (defun claude-fix-error-at-point (&optional arg)
   "Ask Claude to fix the error at point.
 
-Gets the error message, file name, and line number, and instructs
-Claude to fix the error.
+Gets the error message, file name, and line number, and instructs Claude
+to fix the error. If flycheck-mode is not active, shows a message and
+returns immediately.
 
 With prefix ARG, switch to the Claude buffer after sending."
   (interactive "P")
+  (unless (bound-and-true-p flycheck-mode)
+    (message "Flycheck mode is not enabled in this buffer.")
+    (cl-return-from claude-fix-error-at-point))
+  
   (let* ((error-text (claude--format-flycheck-errors-at-point))
          (file-name (when (buffer-file-name)
-                      (file-relative-name (buffer-file-name) (project-root (project-current t)))))
-         (command (format "Fix this error in %s:\n. Do not run any external linter or other program, just fix the error at point using the context provided in the error message: <%s>" file-name error-text)))
+                      (file-relative-name (buffer-file-name) (project-root (project-current t))))))
     (if (string= error-text "No errors at point")
         (message "No errors found at point")
-      (claude-code--do-send-command command)
-      (when arg
-        (switch-to-buffer "*claude*")))))
+      (let ((command (format "Fix this error in %s:\nDo not run any external linter or other program, just fix the error at point using the context provided in the error message: <%s>"
+                             file-name error-text)))
+        (claude-code--do-send-command command)
+        (when arg
+          (switch-to-buffer "*claude*"))))))
 
 ;;;; Mode definition
 ;;;###autoload
