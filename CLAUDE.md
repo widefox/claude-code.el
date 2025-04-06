@@ -2,9 +2,14 @@
 
 ## Build and Test Commands
 - Install package: `M-x package-install-file RET /path/to/claude-code.el`
-- Byte compile: `emacs -Q --batch -f batch-byte-compile claude-code.el`
-- Check package: `emacs -Q --batch -l package-lint.el -f package-lint-batch-and-exit claude-code.el`
-- Lint with checkdoc: `emacs -Q --batch -l checkdoc -f checkdoc-file claude-code.el`
+- Use project Makefile targets (preferred methods):
+  - Byte compile: `make compile`
+  - Lint with checkdoc: `make checkdoc`
+  - Run both checkdoc and compile: `make all`
+- Alternative direct commands:
+  - Byte compile: `emacs -Q --batch -f batch-byte-compile claude-code.el`
+  - Check package: `emacs -Q --batch -l package-lint.el -f package-lint-batch-and-exit claude-code.el`
+  - Lint with checkdoc: `emacs -Q --batch -l checkdoc -f checkdoc-file claude-code.el`
 
 ## Code Style Guidelines
 - Prefix all functions/variables with `claude-code-` (public) or `claude-code--` (private)
