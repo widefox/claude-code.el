@@ -25,8 +25,7 @@ An Emacs interface for [Claude Code CLI](https://github.com/anthropics/claude-co
 
 ;; Then in your init.el:
 (require 'claude-code)
-(setq claude-code-prefix-key "C-c c")
-(define-key global-map (kbd "C-c c") claude-code-command-map)
+(global-set-key (kbd "C-c c") claude-code-command-map) ;; or your preferred key
 (claude-code-mode)
 ```
 
@@ -45,7 +44,7 @@ An Emacs interface for [Claude Code CLI](https://github.com/anthropics/claude-co
 
 ## Usage
 
-The default prefix key for all Claude Code commands is `C-c c`. This can be customized with `claude-code-prefix-key`.
+You need to set your own key binding for the Claude Code command map. The examples in this README use `C-c c` as the prefix key.
 
 ### Basic Commands
 
@@ -76,8 +75,8 @@ For quick access to Claude slash commands like `/help`, `/clear`, or `/compact`,
 ## Customization
 
 ```elisp
-;; Change the prefix key
-(setq claude-code-prefix-key "C-c C-a")
+;; Set your key binding for the command map
+(global-set-key (kbd "C-c C-a") claude-code-command-map)
 
 ;; Set terminal type for the Claude terminal emulation (default is "xterm-256color")
 ;; This determines terminal capabilities like color support

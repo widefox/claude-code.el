@@ -31,12 +31,6 @@
   :type 'string
   :group 'claude-code)
 
-;;;###autoload (autoload 'claude-code-prefix-key "claude-code")
-(defcustom claude-code-prefix-key "C-c c"
-  "Prefix key for Claude commands."
-  :type 'string
-  :group 'claude-code)
-
 (defcustom claude-code-start-hook nil
   "Hook run after Claude is started."
   :type 'hook
@@ -205,8 +199,7 @@ With non-nil ARG, switch to the Claude buffer after starting."
       (switch-to-buffer buffer))))
 
 (defun claude--format-flycheck-errors-at-point ()
-  "Format the flycheck errors at point as a string with file and line
-  numbers."
+  "Format the flycheck errors at point as a string with file and line numbers."
   (interactive)
   (let ((errors (flycheck-overlay-errors-at (point)))
         (result ""))
@@ -242,8 +235,9 @@ With prefix ARG, prompt for the project directory."
 If no region is active, send the entire buffer if it's not too large.
 For large buffers, ask for confirmation first.
 
-With prefix ARG, prompt for instructions to add to the text before sending.
-With two prefix ARGs (C-u C-u), both add instructions and switch to Claude buffer."
+With prefix ARG, prompt for instructions to add to the text before
+sending.   With two prefix ARGs (C-u C-u), both add instructions and
+switch to Claude buffer."
   (interactive "P")
   (let* ((text (if (use-region-p)
                    (buffer-substring-no-properties (region-beginning) (region-end))
@@ -251,13 +245,13 @@ With two prefix ARGs (C-u C-u), both add instructions and switch to Claude buffe
                      (when (yes-or-no-p "Buffer is large.  Send anyway? ")
                        (buffer-substring-no-properties (point-min) (point-max)))
                    (buffer-substring-no-properties (point-min) (point-max)))))
-         (prompt (cond 
+         (prompt (cond
                   ((equal arg '(4)) ; C-u
                    (read-string "Instructions for Claude: "))
                   ((equal arg '(16)) ; C-u C-u
                    (read-string "Instructions for Claude: "))
                   (t nil)))
-         (full-text (if prompt 
+         (full-text (if prompt
                         (format "%s\n\n%s" prompt text)
                       text)))
     (when full-text
@@ -385,15 +379,13 @@ With prefix ARG, switch to the Claude buffer after sending."
 (define-minor-mode claude-code-mode
   "Minor mode for interacting with Claude AI CLI.
 
-When enabled, provides keybindings for starting, sending commands to,
-and managing Claude sessions."
+When enabled, provides functionality for starting, sending commands to,
+and managing Claude sessions.  No default keybindings are set.  Users
+should set their own bindings to `claude-code-command-map`."
   :init-value nil
   :lighter " Claude"
   :global t
-  :group 'claude-code
-  (if claude-code-mode
-      (global-set-key (kbd claude-code-prefix-key) claude-code-command-map)
-    (global-unset-key (kbd claude-code-prefix-key))))
+  :group 'claude-code)
 
 ;;;; Provide the feature
 (provide 'claude-code)
