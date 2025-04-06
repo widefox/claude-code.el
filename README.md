@@ -56,7 +56,7 @@ The default prefix key for all Claude Code commands is `C-c c`. This can be cust
 - `claude-code-kill` (`C-c c k`) - Kill Claude session
 - `claude-code-send-command` (`C-c c s`) - Send command to Claude
 - `claude-code-send-command-with-context` (`C-c c x`) - Send command with current file and line context
-- `claude-code-send-region` (`C-c c r`) - Send the current region or buffer to Claude
+- `claude-code-send-region` (`C-c c r`) - Send the current region or buffer to Claude. With prefix arg (`C-u`), prompts for instructions to add to the text. With double prefix (`C-u C-u`), adds instructions and switches to Claude buffer
 - `claude-fix-error-at-point` (`C-c c e`) - Ask Claude to fix the error at the current point (requires flycheck)
 - `claude-code-slash-commands` (`C-c c /`) - Access Claude slash commands menu
 - `claude-code-transient` (`C-c c m`) - Show all commands (transient menu)

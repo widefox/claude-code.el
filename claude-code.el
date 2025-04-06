@@ -7,7 +7,6 @@
 ;; URL: https://github.com/stevemolitor/claude-code.el
 
 ;;; Commentary:
-
 ;; An Emacs interface to Claude Code.  This package provides convenient
 ;; ways to interact with Claude from within Emacs, including sending
 ;; commands, toggling the Claude window, and accessing slash commands.
@@ -94,6 +93,7 @@ These are passed as SWITCHES parameters to `eat-make`."
     (define-key map "y" 'claude-code-send-return)
     (define-key map "n" 'claude-code-send-escape)
     (define-key map "r" 'claude-code-send-region)
+    (define-key map "e" 'claude-fix-error-at-point)
     map)
   "Keymap for Claude commands.")
 
@@ -110,6 +110,7 @@ These are passed as SWITCHES parameters to `eat-make`."
    ["Send Commands to Claude" ("s" "Send command" claude-code-send-command)
     ("x" "Send command with context" claude-code-send-command-with-context)
     ("r" "Send region or buffer" claude-code-send-region)
+    ("e" "Fix error at point" claude-fix-error-at-point)
     ("y" "Send <return> to Claude (\"Yes\")" claude-code-send-return)
     ("n" "Send <escape> to Claude (\"No\")" claude-code-send-escape)
     ("/" "Slash Commands" claude-code-slash-commands)]])
@@ -203,6 +204,25 @@ With non-nil ARG, switch to the Claude buffer after starting."
     (when arg
       (switch-to-buffer buffer))))
 
+(defun claude--format-flycheck-errors-at-point ()
+  "Format the flycheck errors at point as a string with file and line
+  numbers."
+  (interactive)
+  (let ((errors (flycheck-overlay-errors-at (point)))
+        (result ""))
+    (if (not errors)
+        "No errors at point"
+      (dolist (err errors)
+        (let ((file (flycheck-error-filename err))
+              (line (flycheck-error-line err))
+              (msg (flycheck-error-message err)))
+          (setq result (concat result
+                               (format "%s:%d: %s\n"
+                                       file
+                                       line
+                                       msg)))))
+      (string-trim-right result))))
+
 ;;;; Interactive Commands
 ;;;###autoload
 (defun claude-code (&optional arg)
@@ -222,17 +242,27 @@ With prefix ARG, prompt for the project directory."
 If no region is active, send the entire buffer if it's not too large.
 For large buffers, ask for confirmation first.
 
-With prefix ARG, switch to the Claude buffer after sending the text."
+With prefix ARG, prompt for instructions to add to the text before sending.
+With two prefix ARGs (C-u C-u), both add instructions and switch to Claude buffer."
   (interactive "P")
-  (let ((text (if (use-region-p)
-                  (buffer-substring-no-properties (region-beginning) (region-end))
-                (if (> (buffer-size) claude-code-large-buffer-threshold)
-                    (when (yes-or-no-p "Buffer is large.  Send anyway? ")
-                      (buffer-substring-no-properties (point-min) (point-max)))
-                  (buffer-substring-no-properties (point-min) (point-max))))))
-    (when text
-      (claude-code--do-send-command text)
-      (when arg
+  (let* ((text (if (use-region-p)
+                   (buffer-substring-no-properties (region-beginning) (region-end))
+                 (if (> (buffer-size) claude-code-large-buffer-threshold)
+                     (when (yes-or-no-p "Buffer is large.  Send anyway? ")
+                       (buffer-substring-no-properties (point-min) (point-max)))
+                   (buffer-substring-no-properties (point-min) (point-max)))))
+         (prompt (cond 
+                  ((equal arg '(4)) ; C-u
+                   (read-string "Instructions for Claude: "))
+                  ((equal arg '(16)) ; C-u C-u
+                   (read-string "Instructions for Claude: "))
+                  (t nil)))
+         (full-text (if prompt 
+                        (format "%s\n\n%s" prompt text)
+                      text)))
+    (when full-text
+      (claude-code--do-send-command full-text)
+      (when (equal arg '(16)) ; Only switch buffer with C-u C-u
         (switch-to-buffer "*claude*")))))
 
 ;;;###autoload
@@ -330,6 +360,25 @@ having to switch to the REPL buffer."
         (eat-term-send-string eat-terminal (kbd "ESC"))
         (display-buffer claude-code-buffer))
     (error "Claude is not running")))
+
+;;;###autoload
+(defun claude-fix-error-at-point (&optional arg)
+  "Ask Claude to fix the error at point.
+
+Gets the error message, file name, and line number, and instructs
+Claude to fix the error.
+
+With prefix ARG, switch to the Claude buffer after sending."
+  (interactive "P")
+  (let* ((error-text (claude--format-flycheck-errors-at-point))
+         (file-name (when (buffer-file-name)
+                      (file-relative-name (buffer-file-name) (project-root (project-current t)))))
+         (command (format "Fix this error in %s:\n. Do not run any external linter or other program, just fix the error at point using the context provided in the error message: <%s>" file-name error-text)))
+    (if (string= error-text "No errors at point")
+        (message "No errors found at point")
+      (claude-code--do-send-command command)
+      (when arg
+        (switch-to-buffer "*claude*")))))
 
 ;;;; Mode definition
 ;;;###autoload
