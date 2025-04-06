@@ -94,7 +94,7 @@ These are passed as SWITCHES parameters to `eat-make`."
     (define-key map "y" 'claude-code-send-return)
     (define-key map "n" 'claude-code-send-escape)
     (define-key map "r" 'claude-code-send-region)
-    (define-key map "e" 'claude-fix-error-at-point)
+    (define-key map "e" 'claude-code-fix-error-at-point)
     map)
   "Keymap for Claude commands.")
 
@@ -111,7 +111,7 @@ These are passed as SWITCHES parameters to `eat-make`."
    ["Send Commands to Claude" ("s" "Send command" claude-code-send-command)
     ("x" "Send command with context" claude-code-send-command-with-context)
     ("r" "Send region or buffer" claude-code-send-region)
-    ("e" "Fix error at point" claude-fix-error-at-point)
+    ("e" "Fix error at point" claude-code-fix-error-at-point)
     ("y" "Send <return> to Claude (\"Yes\")" claude-code-send-return)
     ("n" "Send <escape> to Claude (\"No\")" claude-code-send-escape)
     ("/" "Slash Commands" claude-code-slash-commands)]])
@@ -205,7 +205,7 @@ With non-nil ARG, switch to the Claude buffer after starting."
     (when arg
       (switch-to-buffer buffer))))
 
-(defun claude--format-flycheck-errors-at-point ()
+(defun claude-code--format-flycheck-errors-at-point ()
   "Format the flycheck errors at point as a string with file and line numbers.
 Returns a string with the errors or a message if flycheck is not available."
   (interactive)
@@ -368,7 +368,7 @@ having to switch to the REPL buffer."
     (error "Claude is not running")))
 
 ;;;###autoload
-(defun claude-fix-error-at-point (&optional arg)
+(defun claude-code-fix-error-at-point (&optional arg)
   "Ask Claude to fix the error at point.
 
 Gets the error message, file name, and line number, and instructs Claude
@@ -379,9 +379,9 @@ With prefix ARG, switch to the Claude buffer after sending."
   (interactive "P")
   (unless (bound-and-true-p flycheck-mode)
     (message "Flycheck mode is not enabled in this buffer.")
-    (cl-return-from claude-fix-error-at-point))
+    (cl-return-from claude-code-fix-error-at-point))
   
-  (let* ((error-text (claude--format-flycheck-errors-at-point))
+  (let* ((error-text (claude-code--format-flycheck-errors-at-point))
          (file-name (when (buffer-file-name)
                       (file-relative-name (buffer-file-name) (project-root (project-current t))))))
     (if (string= error-text "No errors at point")
