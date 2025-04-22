@@ -1,7 +1,7 @@
 ;;; claude-code.el --- Claude Code Emacs integration -*- lexical-binding: t; -*-
 
 ;; Author: Stephen Molitor <stevemolitor@gmail.com>
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;; Package-Requires: ((emacs "30.0") (transient "0.7.5") (eat "0.9.2"))
 ;; Keywords: tools, ai
 ;; URL: https://github.com/stevemolitor/claude-code.el
