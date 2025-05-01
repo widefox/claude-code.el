@@ -2,6 +2,14 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [0.2.1] - 2025-05-01
+
+### Added
+- Extended `claude-code-fix-error-at-point` to support flymake and any system implementing help-at-pt
+
+### Changed
+- Fixed compiler warnings (thanks to [ncaq](https://github.com/ncaq))
+
 ## [0.2.0] - 2025-04-22
 
 ### Added

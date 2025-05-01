@@ -205,28 +205,37 @@ With non-nil ARG, switch to the Claude buffer after starting."
     (when arg
       (switch-to-buffer buffer))))
 
-(defun claude-code--format-flycheck-errors-at-point ()
-  "Format the flycheck errors at point as a string with file and line numbers.
-Returns a string with the errors or a message if flycheck is not available."
+(defun claude-code--format-errors-at-point ()
+  "Format errors at point as a string with file and line numbers.
+First tries flycheck errors if flycheck is enabled, then falls back
+to help-at-pt (used by flymake and other systems).
+Returns a string with the errors or a message if no errors found."
   (interactive)
-  (if (not (featurep 'flycheck))
-      "Flycheck is not available"
-    (if (not (bound-and-true-p flycheck-mode))
-        "Flycheck mode is not enabled in this buffer"
-      (let ((errors (flycheck-overlay-errors-at (point)))
-            (result ""))
-        (if (not errors)
-            "No errors at point"
-          (dolist (err errors)
-            (let ((file (flycheck-error-filename err))
-                  (line (flycheck-error-line err))
-                  (msg (flycheck-error-message err)))
-              (setq result (concat result
-                                   (format "%s:%d: %s\n"
-                                           file
-                                           line
-                                           msg)))))
-          (string-trim-right result))))))
+  (cond
+   ;; Try flycheck first if available and enabled
+   ((and (featurep 'flycheck) (bound-and-true-p flycheck-mode))
+    (let ((errors (flycheck-overlay-errors-at (point)))
+          (result ""))
+      (if (not errors)
+          "No flycheck errors at point"
+        (dolist (err errors)
+          (let ((file (flycheck-error-filename err))
+                (line (flycheck-error-line err))
+                (msg (flycheck-error-message err)))
+            (setq result (concat result
+                                 (format "%s:%d: %s\n"
+                                         file
+                                         line
+                                         msg)))))
+        (string-trim-right result))))
+   ;; Fall back to help-at-pt-kbd-string (works with flymake and other sources)
+   ((help-at-pt-kbd-string)
+    (let ((help-str (help-at-pt-kbd-string)))
+      (if (not (null help-str))
+          (substring-no-properties help-str)
+        "No help string available at point")))
+   ;; No errors found by any method
+   (t "No errors at point")))
 
 ;;;; Interactive Commands
 ;;;###autoload
@@ -372,16 +381,16 @@ having to switch to the REPL buffer."
   "Ask Claude to fix the error at point.
 
 Gets the error message, file name, and line number, and instructs Claude
-to fix the error. If flycheck-mode is not active, shows a message and
-returns immediately.
+to fix the error. Supports both flycheck and flymake error systems, as well
+as any system that implements help-at-pt.
 
 With prefix ARG, switch to the Claude buffer after sending."
   (interactive "P")
-  (unless (bound-and-true-p flycheck-mode)
-    (message "Flycheck mode is not enabled in this buffer.")
-    (cl-return-from claude-code-fix-error-at-point))
+  ;; (unless (bound-and-true-p flycheck-mode)
+  ;;   (message "Flycheck mode is not enabled in this buffer.")
+  ;;   (cl-return-from claude-code-fix-error-at-point))
   
-  (let* ((error-text (claude-code--format-flycheck-errors-at-point))
+  (let* ((error-text (claude-code--format-errors-at-point))
          (file-name (when (buffer-file-name)
                       (file-relative-name (buffer-file-name) (project-root (project-current t))))))
     (if (string= error-text "No errors at point")

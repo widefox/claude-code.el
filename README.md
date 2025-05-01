@@ -56,7 +56,7 @@ You need to set your own key binding for the Claude Code command map. The exampl
 - `claude-code-send-command` (`C-c c s`) - Send command to Claude
 - `claude-code-send-command-with-context` (`C-c c x`) - Send command with current file and line context
 - `claude-code-send-region` (`C-c c r`) - Send the current region or buffer to Claude. With prefix arg (`C-u`), prompts for instructions to add to the text. With double prefix (`C-u C-u`), adds instructions and switches to Claude buffer
-- `claude-code-fix-error-at-point` (`C-c c e`) - Ask Claude to fix the error at the current point (works with flycheck if available)
+- `claude-code-fix-error-at-point` (`C-c c e`) - Ask Claude to fix the error at the current point (works with flycheck, flymake, and any system that implements help-at-pt)
 - `claude-code-slash-commands` (`C-c c /`) - Access Claude slash commands menu
 - `claude-code-transient` (`C-c c m`) - Show all commands (transient menu)
 - `claude-code-send-return` (`C-c c y`) - Send return key to Claude (useful for confirming with Claude without switching to the Claude REPL buffer)
