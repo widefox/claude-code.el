@@ -181,20 +181,24 @@ for consistent appearance."
   (face-remap-add-relative 'nobreak-space :underline nil)
   (face-remap-add-relative 'eat-term-faint :foreground "#999999" :weight 'light))
 
-(defun claude-code--start (dir &optional arg)
+(defun claude-code--start (dir &optional arg continue)
   "Start Claude in directory DIR.
 
-With non-nil ARG, switch to the Claude buffer after starting."
+With non-nil ARG, switch to the Claude buffer after starting.
+With non-nil CONTINUE, start Claude with --continue flag to continue previous conversation."
   ;; Forward declare variables to avoid compilation warnings
   (require 'eat)
   
-  (let ((default-directory dir)
-        (buffer (get-buffer-create "*claude*")))
+  (let* ((default-directory dir)
+         (buffer (get-buffer-create "*claude*"))
+         (program-switches (if continue
+                              (append claude-code-program-switches '("--continue"))
+                            claude-code-program-switches)))
     (with-current-buffer buffer
       (cd dir)
       (setq-local eat-term-name claude-code-term-name)
       (let ((process-adaptive-read-buffering nil))
-        (apply #'eat-make "claude" claude-code-program nil claude-code-program-switches))
+        (apply #'eat-make "claude" claude-code-program nil program-switches))
       (setq-local eat-term-name claude-code-term-name)
       (claude-code--setup-repl-faces)
       (run-hooks 'claude-code-start-hook)
@@ -242,12 +246,14 @@ Returns a string with the errors or a message if no errors found."
 (defun claude-code (&optional arg)
   "Start Claude in an eat terminal and enable `claude-code-mode'.
 
-With prefix ARG, prompt for the project directory."
+With single prefix ARG (C-u), prompt for the project directory.
+With double prefix ARG (C-u C-u), continue previous conversation."
   (interactive "P")
-  (let* ((dir (if arg
+  (let* ((dir (if (and arg (not (equal arg '(16))))
                   (read-directory-name "Project directory: ")
-                (funcall #'project-root (project-current t)))))
-    (claude-code--start dir arg)))
+                (funcall #'project-root (project-current t))))
+         (continue (equal arg '(16))))
+    (claude-code--start dir arg continue)))
 
 ;;;###autoload
 (defun claude-code-send-region (&optional arg)
@@ -284,9 +290,11 @@ switch to Claude buffer."
 (defun claude-code-current-directory (&optional arg)
   "Start Claude in the current directory.
 
-With non-nil ARG, switch to the Claude buffer after starting."
+With single prefix ARG (C-u), switch to the Claude buffer after starting.
+With double prefix ARG (C-u C-u), continue previous conversation."
   (interactive "P")
-  (claude-code--start default-directory arg))
+  (let ((continue (equal arg '(16))))
+    (claude-code--start default-directory arg continue)))
 
 ;;;###autoload
 (defun claude-code-toggle ()

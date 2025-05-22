@@ -2,6 +2,12 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [0.2.2] - 2025-05-22
+
+### Added
+- Support for continuing previous conversations with double prefix arg (`C-u C-u`) in `claude-code` and `claude-code-current-directory` commands
+    - Uses Claude's `--continue` flag to resume previous sessions
+
 ## [0.2.1] - 2025-05-01
 
 ### Added

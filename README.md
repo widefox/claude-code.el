@@ -62,7 +62,16 @@ You need to set your own key binding for the Claude Code command map. The exampl
 - `claude-code-send-return` (`C-c c y`) - Send return key to Claude (useful for confirming with Claude without switching to the Claude REPL buffer)
 - `claude-code-send-escape` (`C-c c n`) - Send escape key to Claude (useful for saying "No" when Claude asks for confirmation without switching to the Claude REPL buffer)
 
-With a prefix arg, `claude-code`, `claude-code-current-directory`, `claude-code-send-command` and `claude-code-send-command-with-context` will switch to the Claude terminal buffer after sending the command. 
+With a prefix arg, `claude-code`, `claude-code-current-directory`, `claude-code-send-command` and `claude-code-send-command-with-context` will switch to the Claude terminal buffer after sending the command.
+
+### Continuing Previous Conversations
+
+The `claude-code` and `claude-code-current-directory` commands support continuing previous conversations using Claude's `--continue` flag:
+
+- Double prefix arg (`C-u C-u C-c c c`) - Start Claude in project root and continue previous conversation
+- Double prefix arg (`C-u C-u C-c c d`) - Start Claude in current directory and continue previous conversation
+
+This allows you to resume where you left off in your previous Claude session. 
 
 ### Transient Menus
 
