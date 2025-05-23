@@ -150,6 +150,21 @@ This [demo](./demo.gif) shows claude-code.el in action, including toggling the C
 
 Check out this [video demo](https://www.youtube.com/watch?v=K8sCVLmFyyU) demonstrating the claude-code.el package. This video was kindly created and shared by a user of the package.
 
+### Read-Only Mode for Text Selection
+
+In the Claude terminal, you can switch to a read-only mode to select and copy text:
+
+- `C-c C-e` (`eat-emacs-mode`) - Switch to read-only mode with normal Emacs cursor for text selection
+- `C-c C-j` (`semi-char-mode`) - Return to normal terminal mode
+
+The cursor appearance in read-only mode can be customized via the `claude-code-invisible-cursor-type` variable:
+
+```elisp
+;; Customize cursor type in read-only mode (default is 'box)
+;; Options: 'box, 'hollow, 'bar, 'hbar, or nil
+(setq claude-code-invisible-cursor-type 'bar)
+```
+
 ## Limitations
 
 - Currently, `claude-code.el` only supports running one Claude Code process at a time.

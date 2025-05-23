@@ -65,6 +65,58 @@ These are passed as SWITCHES parameters to `eat-make`."
   :type '(repeat string)
   :group 'claude-code)
 
+(defcustom claude-code-invisible-cursor-type '(box nil nil)
+  "Type of cursor to use as invisible cursor in Claude Code terminal buffer.
+
+The value is a list of form (CURSOR-ON BLINKING-FREQUENCY CURSOR-OFF).
+
+When the cursor is on, CURSOR-ON is used as `cursor-type', which see.
+BLINKING-FREQUENCY is the blinking frequency of cursor's blinking.
+When the cursor is off, CURSOR-OFF is used as `cursor-type'.  This
+should be nil when cursor is not blinking.
+
+Valid cursor types for CURSOR-ON and CURSOR-OFF:
+- t: Frame default cursor
+- box: Filled box cursor
+- (box . N): Box cursor with specified size N
+- hollow: Hollow cursor
+- bar: Vertical bar cursor
+- (bar . N): Vertical bar with specified height N
+- hbar: Horizontal bar cursor
+- (hbar . N): Horizontal bar with specified width N
+- nil: No cursor
+
+BLINKING-FREQUENCY can be nil (no blinking) or a number."
+  :type '(list
+          (choice
+           (const :tag "Frame default" t)
+           (const :tag "Filled box" box)
+           (cons :tag "Box with specified size" (const box) integer)
+           (const :tag "Hollow cursor" hollow)
+           (const :tag "Vertical bar" bar)
+           (cons :tag "Vertical bar with specified height" (const bar)
+                 integer)
+           (const :tag "Horizontal bar" hbar)
+           (cons :tag "Horizontal bar with specified width"
+                 (const hbar) integer)
+           (const :tag "None" nil))
+          (choice
+           (const :tag "No blinking" nil)
+           (number :tag "Blinking frequency"))
+          (choice
+           (const :tag "Frame default" t)
+           (const :tag "Filled box" box)
+           (cons :tag "Box with specified size" (const box) integer)
+           (const :tag "Hollow cursor" hollow)
+           (const :tag "Vertical bar" bar)
+           (cons :tag "Vertical bar with specified height" (const bar)
+                 integer)
+           (const :tag "Horizontal bar" hbar)
+           (cons :tag "Horizontal bar with specified width"
+                 (const hbar) integer)
+           (const :tag "None" nil)))
+  :group 'claude-code)
+
 ;; Forward declare variables to avoid compilation warnings
 (defvar eat-terminal)
 (defvar eat-term-name)
@@ -196,6 +248,7 @@ With non-nil CONTINUE, start Claude with --continue flag to continue previous co
                             claude-code-program-switches)))
     (with-current-buffer buffer
       (cd dir)
+      (setq-local eat-invisible-cursor-type claude-code-invisible-cursor-type)
       (setq-local eat-term-name claude-code-term-name)
       (let ((process-adaptive-read-buffering nil))
         (apply #'eat-make "claude" claude-code-program nil program-switches))
