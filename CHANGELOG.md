@@ -7,8 +7,8 @@ All notable changes to claude-code.el will be documented in this file.
 ### Added
 - Support for continuing previous conversations with double prefix arg (`C-u C-u`) in `claude-code` and `claude-code-current-directory` commands
     - Uses Claude's `--continue` flag to resume previous sessions
-- Read-only mode for text selection in Claude terminal with `C-c C-e` and `C-c C-j` keybindings
-- Customizable cursor appearance in read-only mode via `claude-code-invisible-cursor-type`
+- Read-only mode for text selection in Claude terminal. Toggle with `claude-code-toggle-read-only-mode`.
+- Customizable cursor appearance in read-only mode via `claude-code-read-only-mode-cursor-type`
 
 ## [0.2.1] - 2025-05-01
 

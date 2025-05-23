@@ -17,6 +17,13 @@
 (require 'project)
 (require 'cl-lib)
 
+;; Declare external variables and functions from eat package
+(defvar eat--semi-char-mode)
+(defvar eat-terminal)
+(declare-function eat-term-reset "eat" (terminal))
+(declare-function eat-term-redisplay "eat" (terminal))
+(declare-function eat--set-cursor "eat" (terminal &rest args))
+
 ;;;; Customization options
 (defgroup claude-code nil
   "Claude AI interface for Emacs."
@@ -65,7 +72,7 @@ These are passed as SWITCHES parameters to `eat-make`."
   :type '(repeat string)
   :group 'claude-code)
 
-(defcustom claude-code-invisible-cursor-type '(box nil nil)
+(defcustom claude-code-read-only-mode-cursor-type '(box nil nil)
   "Type of cursor to use as invisible cursor in Claude Code terminal buffer.
 
 The value is a list of form (CURSOR-ON BLINKING-FREQUENCY CURSOR-OFF).
@@ -120,9 +127,12 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
 ;; Forward declare variables to avoid compilation warnings
 (defvar eat-terminal)
 (defvar eat-term-name)
+(defvar eat-invisible-cursor-type)
 (declare-function eat-term-send-string "eat")
 (declare-function eat-kill-process "eat")
 (declare-function eat-make "eat")
+(declare-function eat-emacs-mode "eat")
+(declare-function eat-semi-char-mode "eat")
 
 ;; Forward declare flycheck functions
 (declare-function flycheck-overlay-errors-at "flycheck")
@@ -134,19 +144,20 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
 ;;;###autoload (autoload 'claude-code-command-map "claude-code")
 (defvar claude-code-command-map
   (let ((map (make-sparse-keymap)))
+    (define-key map "/" 'claude-code-slash-commands)
+    (define-key map "b" 'claude-code-switch-to-buffer)
     (define-key map "c" 'claude-code)
     (define-key map "d" 'claude-code-current-directory)
-    (define-key map "t" 'claude-code-toggle)
-    (define-key map "b" 'claude-code-switch-to-buffer)
+    (define-key map "e" 'claude-code-fix-error-at-point)
     (define-key map "k" 'claude-code-kill)
-    (define-key map "s" 'claude-code-send-command)
-    (define-key map "x" 'claude-code-send-command-with-context)
-    (define-key map "/" 'claude-code-slash-commands)
     (define-key map "m" 'claude-code-transient)
-    (define-key map "y" 'claude-code-send-return)
     (define-key map "n" 'claude-code-send-escape)
     (define-key map "r" 'claude-code-send-region)
-    (define-key map "e" 'claude-code-fix-error-at-point)
+    (define-key map "s" 'claude-code-send-command)
+    (define-key map "t" 'claude-code-toggle)
+    (define-key map "x" 'claude-code-send-command-with-context)
+    (define-key map "y" 'claude-code-send-return)
+    (define-key map "z" 'claude-code-toggle-read-only-mode)
     map)
   "Keymap for Claude commands.")
 
@@ -159,7 +170,8 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
     ("d" "Start Claude in current directory" claude-code-current-directory)
     ("t" "Toggle claude window" claude-code-toggle)
     ("b" "Switch to Claude buffer" claude-code-switch-to-buffer)
-    ("k" "Kill Claude" claude-code-kill)]
+    ("k" "Kill Claude" claude-code-kill)
+    ("z" "Toggle read-only mode" claude-code-toggle-read-only-mode)]
    ["Send Commands to Claude" ("s" "Send command" claude-code-send-command)
     ("x" "Send command with context" claude-code-send-command-with-context)
     ("r" "Send region or buffer" claude-code-send-region)
@@ -236,8 +248,9 @@ for consistent appearance."
 (defun claude-code--start (dir &optional arg continue)
   "Start Claude in directory DIR.
 
-With non-nil ARG, switch to the Claude buffer after starting.
-With non-nil CONTINUE, start Claude with --continue flag to continue previous conversation."
+With non-nil ARG, switch to the Claude buffer after starting. With
+non-nil CONTINUE, start Claude with --continue flag to continue previous
+conversation."
   ;; Forward declare variables to avoid compilation warnings
   (require 'eat)
   
@@ -252,8 +265,6 @@ With non-nil CONTINUE, start Claude with --continue flag to continue previous co
       (setq-local eat-term-name claude-code-term-name)
       (let ((process-adaptive-read-buffering nil))
         (apply #'eat-make "claude" claude-code-program nil program-switches))
-      (setq-local eat-invisible-cursor-type claude-code-invisible-cursor-type)
-      (setq-local eat-term-name claude-code-term-name)
       (claude-code--setup-repl-faces)
       (run-hooks 'claude-code-start-hook)
 
@@ -463,14 +474,60 @@ With prefix ARG, switch to the Claude buffer after sending."
         (when arg
           (switch-to-buffer "*claude*"))))))
 
+;;;###autoload
+(defun claude-code-read-only-mode ()
+  "Enter read-only mode in Claude buffer with visible cursor.
+
+In this mode, you can interact with the terminal buffer just like a
+regular buffer. This mode is useful for selecting text in the Claude
+buffer. However, you are not allowed to change the buffer contents or
+enter Claude commands.
+
+Use `claude-code-exit-read-only-mode' to switch back to normal mode."
+  (interactive)
+  (if-let ((claude-code-buffer (get-buffer "*claude*")))
+      (with-current-buffer claude-code-buffer
+        (eat-emacs-mode)
+        (setq-local eat-invisible-cursor-type claude-code-read-only-mode-cursor-type)
+        (eat--set-cursor nil :invisible)
+        (message "Claude read-only mode enabled"))
+    (error "Claude is not running")))
+
+;;;###autoload
+(defun claude-code-exit-read-only-mode ()
+  "Exit read-only mode and return to normal mode (eat semi-char mode)."
+  (interactive)
+  (if-let ((claude-code-buffer (get-buffer "*claude*")))
+      (with-current-buffer claude-code-buffer
+        (eat-semi-char-mode)
+        (setq-local eat-invisible-cursor-type nil)
+        (eat--set-cursor nil :invisible)
+        (message "Claude semi-char mode enabled"))
+    (error "Claude is not running")))
+
+;;;###autoload
+(defun claude-code-toggle-read-only-mode ()
+  "Toggle between read-only mode and normal mode.
+
+In read-only mode you can interact with the terminal buffer just like a
+regular buffer. This mode is useful for selecting text in the Claude
+buffer. However, you are not allowed to change the buffer contents or
+enter Claude commands."
+  (interactive)
+  (if-let ((claude-code-buffer (get-buffer "*claude*")))
+      (with-current-buffer claude-code-buffer
+        (if eat--semi-char-mode
+            (claude-code-read-only-mode)
+          (claude-code-exit-read-only-mode)))
+    (error "Claude is not running")))
+
 ;;;; Mode definition
 ;;;###autoload
 (define-minor-mode claude-code-mode
   "Minor mode for interacting with Claude AI CLI.
 
 When enabled, provides functionality for starting, sending commands to,
-and managing Claude sessions.  No default keybindings are set.  Users
-should set their own bindings to `claude-code-command-map`."
+and managing Claude sessions."
   :init-value nil
   :lighter " Claude"
   :global t

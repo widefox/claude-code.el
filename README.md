@@ -64,6 +64,18 @@ You need to set your own key binding for the Claude Code command map. The exampl
 
 With a prefix arg, `claude-code`, `claude-code-current-directory`, `claude-code-send-command` and `claude-code-send-command-with-context` will switch to the Claude terminal buffer after sending the command.
 
+### Read-Only Mode Toggle
+
+The `claude-code-toggle-read-only-mode` command provides a convenient way to switch between normal terminal mode and read-only mode in the Claude buffer:
+
+- `claude-code-toggle-read-only-mode` - Toggle between read-only mode and normal mode
+
+In read-only mode, you can interact with the terminal buffer just like a regular Emacs buffer, making it easy to select and copy text. However, you cannot change the buffer contents or enter Claude commands in this mode. This is particularly useful when you need to copy output from Claude without accidentally modifying the terminal.
+
+The command automatically detects the current mode and switches to the other:
+- If in normal terminal mode (semi-char mode), it switches to read-only mode
+- If in read-only mode (emacs mode), it switches back to normal terminal mode
+
 ### Continuing Previous Conversations
 
 The `claude-code` and `claude-code-current-directory` commands support continuing previous conversations using Claude's `--continue` flag:
@@ -157,12 +169,12 @@ In the Claude terminal, you can switch to a read-only mode to select and copy te
 - `C-c C-e` (`eat-emacs-mode`) - Switch to read-only mode with normal Emacs cursor for text selection
 - `C-c C-j` (`semi-char-mode`) - Return to normal terminal mode
 
-The cursor appearance in read-only mode can be customized via the `claude-code-invisible-cursor-type` variable:
+The cursor appearance in read-only mode can be customized via the `claude-code-read-only-mode-cursor-type` variable:
 
 ```elisp
 ;; Customize cursor type in read-only mode (default is 'box)
 ;; Options: 'box, 'hollow, 'bar, 'hbar, or nil
-(setq claude-code-invisible-cursor-type 'bar)
+(setq claude-code-read-only-mode-cursor-type 'bar)
 ```
 
 ## Limitations
