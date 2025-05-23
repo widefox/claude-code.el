@@ -252,6 +252,7 @@ With non-nil CONTINUE, start Claude with --continue flag to continue previous co
       (setq-local eat-term-name claude-code-term-name)
       (let ((process-adaptive-read-buffering nil))
         (apply #'eat-make "claude" claude-code-program nil program-switches))
+      (setq-local eat-invisible-cursor-type claude-code-invisible-cursor-type)
       (setq-local eat-term-name claude-code-term-name)
       (claude-code--setup-repl-faces)
       (run-hooks 'claude-code-start-hook)
