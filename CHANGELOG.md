@@ -2,6 +2,14 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **New feature**: Launch repository-specific Claude sessions - work on multiple projects simultaneously with separate Claude instances
+- Simplified startup behavior: `claude-code` now automatically detects the appropriate directory (project root, current file directory, or default directory)
+- Removed `claude-code-current-directory` command - its functionality is now integrated into the main `claude-code` command
+
 ## [0.2.5] - 2025-06-06
 
 ### Added
@@ -12,9 +20,12 @@ All notable changes to claude-code.el will be documented in this file.
 ### Fixed
 - Disabled unnecessary shell integration features (command history and prompt annotation) to improve performance
 
+### Changed
+
 ## [0.2.4] - 2025-06-05
 
 ### Added
+
 - New `claude-code-fork` command to jump to previous conversations by sending escape-escape to Claude
   - Bound to `C-c c f` in the command map
   - Available in the transient menu
