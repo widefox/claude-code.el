@@ -15,7 +15,7 @@ An Emacs interface for [Claude Code CLI](https://github.com/anthropics/claude-co
 
 - Emacs 30.0 or higher
 - [Claude Code CLI](https://github.com/anthropics/claude-code) installed and configured
-- Required Emacs packages: transient (0.7.5+), eat (0.9.2+)
+- Required Emacs packages: transient (0.4.0+), eat (0.9.2+)
 
 ### Using package.el with vc-install (Emacs 30+)
 
@@ -82,7 +82,7 @@ The `claude-code` and `claude-code-current-directory` commands support continuin
 - Double prefix arg (`C-u C-u C-c c c`) - Start Claude in project root and continue previous conversation
 - Double prefix arg (`C-u C-u C-c c d`) - Start Claude in current directory and continue previous conversation
 
-This allows you to resume where you left off in your previous Claude session. 
+This allows you to resume where you left off in your previous Claude session.
 
 ### Transient Menus
 
@@ -140,7 +140,18 @@ This layout works best on wide screens.
 
 ### Font Configuration for Better Rendering
 
-Using a font with good Unicode support helps avoid flickering while Claude Code is rendering its thinking icons. [JuliaMono](https://juliamono.netlify.app/) works particularly well. If you want to use JuliaMono just for the Claude Code REPL but use a different font everywhere else you can customize the `claude-code-repl-face`:
+Using a font with good Unicode support helps avoid flickering while Claude Code is rendering its thinking icons. [JuliaMono](https://juliamono.netlify.app/) has excellent Unicode symbols support. To let the Claude Code buffer use Julia Mono for rendering Unicode characters while still using your default font for ASCII characters add this elisp code:
+
+```elisp
+(setq use-default-font-for-symbols nil)
+(set-fontset-font t 'unicode (font-spec :family "JuliaMono"))
+
+;; for emoji characters on MacOS
+(set-fontset-font t 'unicode (font-spec :family "Apple Color Emoji") nil 'append)
+```
+
+If instead you want to use a particular font just for the Claude Code REPL but use a different font
+everywhere else you can customize the `claude-code-repl-face`:
 
 ```elisp
 (custom-set-faces
