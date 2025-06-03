@@ -2,6 +2,19 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [0.3.0] - 2025-06-03
+
+### Changed
+- **New feature**: Launch repository-specific Claude sessions - work on multiple projects simultaneously with separate Claude instances
+- Simplified startup behavior: `claude-code` now automatically detects the appropriate directory (project root, current file directory, or default directory)
+- Removed `claude-code-current-directory` command - its functionality is now integrated into the main `claude-code` command
+- Buffer naming now uses project detection instead of only git repositories
+- Improved error handling: `claude-code-kill` now shows a message instead of throwing an error when Claude is not running
+- Removed startup delay that was used to fix terminal layout issues
+
+### Fixed
+- Fixed defgroup/defface ordering to resolve byte-compilation warnings
+
 ## [0.2.3] - 2025-05-23
 
 ### Fixed

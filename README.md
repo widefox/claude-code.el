@@ -44,8 +44,7 @@ You need to set your own key binding for the Claude Code command map. The exampl
 
 ### Basic Commands
 
-- `claude-code` (`C-c c c`) - Start Claude in the current project root
-- `claude-code-current-directory` (`C-c c d`) - Start Claude in the current directory
+- `claude-code` (`C-c c c`) - Start Claude 
 - `claude-code-toggle` (`C-c c t`) - Toggle Claude window
 - `claude-code-switch-to-buffer` (`C-c c b`) - Switch to the Claude buffer
 - `claude-code-kill` (`C-c c k`) - Kill Claude session
@@ -58,7 +57,11 @@ You need to set your own key binding for the Claude Code command map. The exampl
 - `claude-code-send-return` (`C-c c y`) - Send return key to Claude (useful for confirming with Claude without switching to the Claude REPL buffer)
 - `claude-code-send-escape` (`C-c c n`) - Send escape key to Claude (useful for saying "No" when Claude asks for confirmation without switching to the Claude REPL buffer)
 
-With a prefix arg, `claude-code`, `claude-code-current-directory`, `claude-code-send-command` and `claude-code-send-command-with-context` will switch to the Claude terminal buffer after sending the command.
+With a single prefix arg, `claude-code`, `claude-code-send-command` and
+`claude-code-send-command-with-context` will switch to the Claude terminal buffer after sending the
+command.
+
+
 
 ### Read-Only Mode Toggle
 
@@ -74,10 +77,10 @@ The command automatically detects the current mode and switches to the other:
 
 ### Continuing Previous Conversations
 
-The `claude-code` and `claude-code-current-directory` commands support continuing previous conversations using Claude's `--continue` flag:
+The `claude-code` command supports continuing previous conversations using Claude's `--continue`
+flag:
 
 - Double prefix arg (`C-u C-u C-c c c`) - Start Claude in project root and continue previous conversation
-- Double prefix arg (`C-u C-u C-c c d`) - Start Claude in current directory and continue previous conversation
 
 This allows you to resume where you left off in your previous Claude session.
 
@@ -127,7 +130,7 @@ You can control how the Claude Code window appears using Emacs' `display-buffer-
 
 ```elisp
 (add-to-list 'display-buffer-alist
-             '("^\\*claude\\*"
+             '("^\\*claude"
                (display-buffer-in-side-window)
                (side . right)
                (window-width . 0.33)))
