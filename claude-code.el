@@ -28,14 +28,14 @@
 (declare-function eat-term-display-beginning "eat" (terminal))
 
 ;;;; Customization options
-(defgroup claude-code nil
-  "Claude AI interface for Emacs."
-  :group 'tools)
-
 (defface claude-code-repl-face
   nil
   "Face for Claude REPL."
   :group 'claude-code)
+
+(defgroup claude-code nil
+  "Claude AI interface for Emacs."
+  :group 'tools)
 
 (defcustom claude-code-term-name "xterm-256color"
   "Terminal type to use for Claude REPL."
@@ -127,9 +127,6 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
            (const :tag "None" nil)))
   :group 'claude-code)
 
-(defvar claude-code--claude-buffer "*claude*"
-  "Name of the Claude buffer.")
-
 ;; Forward declare variables to avoid compilation warnings
 (defvar eat-terminal)
 (defvar eat-term-name)
@@ -174,7 +171,6 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
   "Claude command menu."
   ["Claude Commands"
    ["Manage Claude" ("c" "Start Claude" claude-code)
-    ("d" "Start Claude in current directory" claude-code-current-directory)
     ("t" "Toggle claude window" claude-code-toggle)
     ("b" "Switch to Claude buffer" claude-code-switch-to-buffer)
     ("k" "Kill Claude" claude-code-kill)
@@ -245,22 +241,28 @@ processes."
         nil
       (apply orig-fun args))))
 
-(defun claude-code--buffer-name ()
-  "Generate the Claude buffer name based on git repo or current buffer file path.
-If not in a git repository and no buffer file exists, returns default name."
-  (let ((git-repo-path (project-root (project-current t)))
-        (current-file (buffer-file-name)))
+(defun claude-code--directory ()
+  "Get get the root Claude directory for the current buffer.
+   
+If not in a project and no buffer file return `default-directory'."
+  (let* ((project (project-current))
+         (current-file (buffer-file-name)))
     (cond
-     ;; Case 1: Valid git repo path
-     (git-repo-path
-      (format "*claude:%s*" (file-truename git-repo-path)))
-     ;; Case 2: Has buffer file (when not in git repo)
-     (current-file
-      (format "*claude:%s*"
-              (file-truename (file-name-directory current-file))))
-     ;; Case 3: No git repo and no buffer file
-     (t
-      "*claude*"))))
+     ;; Case 1: In a project
+     (project (project-root project))
+     ;; Case 2: Has buffer file (when not in VC repo)
+     (current-file (file-name-directory current-file))
+     ;; Case 3: No project and no buffer file
+     (t default-directory))))
+
+(defun claude-code--buffer-name ()
+  "Generate the Claude buffer name based on project or current buffer file.
+   
+If not in a project and no buffer file, return \"*claude*\"."
+  (let ((dir (claude-code--directory)))
+    (if dir
+        (format "*claude:%s*" dir)
+      "*claude*")))
 
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
@@ -331,22 +333,31 @@ possible, preventing the scrolling up issue when editing other buffers."
 
 Ensures the Claude buffer stays scrolled to the bottom when window
 configuration changes (e.g., when minibuffer opens/closes)."
-  (when-let ((claude-buffer (get-buffer (claude-code--buffer-name))))
-    (with-current-buffer claude-buffer
+  (when-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+    (with-current-buffer claude-code-buffer
       ;; Get all windows showing the Claude buffer
-      (if-let ((windows (get-buffer-window-list claude-buffer nil t)))
+      (if-let ((windows (get-buffer-window-list claude-code-buffer nil t)))
         (claude-code--synchronize-scroll windows)))))
 
-(defun claude-code--start (dir &optional arg continue)
-  "Start Claude in directory DIR.
+(defun claude-code (&optional arg)
+  "Start Claude in an eat terminal and enable `claude-code-mode'.
 
-With non-nil ARG, switch to the Claude buffer after starting. With
-non-nil CONTINUE, start Claude with --continue flag to continue previous
-conversation."
+If current buffer belongs to a project start Claude in the project's
+root directory. Otherwise start in the directory of the current buffer
+file, or the current value of `default-directory' if no project and no
+buffer file.
+
+With single prefix ARG (C-u), prompt for the project directory.
+With double prefix ARG (C-u C-u), continue previous conversation."
+  (interactive "P")
+  
   ;; Forward declare variables to avoid compilation warnings
   (require 'eat)
   
-  (let* ((default-directory dir)
+  (let* ((dir (if (and arg (not (equal arg '(16))))
+                  (read-directory-name "Project directory: ")
+                (claude-code--directory)))
+         (continue (equal arg '(16)))(default-directory dir)
          (buffer-name (claude-code--buffer-name))
          (trimmed-buffer-name (string-trim-right (string-trim buffer-name "\\*") "\\*"))
          (buffer (get-buffer-create buffer-name))
@@ -417,17 +428,17 @@ Returns a string with the errors or a message if no errors found."
 
 ;;;; Interactive Commands
 ;;;###autoload
-(defun claude-code (&optional arg)
-  "Start Claude in an eat terminal and enable `claude-code-mode'.
+;; (defun claude-code (&optional arg)
+;;   "Start Claude in an eat terminal and enable `claude-code-mode'.
 
-With single prefix ARG (C-u), prompt for the project directory.
-With double prefix ARG (C-u C-u), continue previous conversation."
-  (interactive "P")
-  (let* ((dir (if (and arg (not (equal arg '(16))))
-                  (read-directory-name "Project directory: ")
-                (funcall #'project-root (project-current t))))
-         (continue (equal arg '(16))))
-    (claude-code--start dir arg continue)))
+;; With single prefix ARG (C-u), prompt for the project directory.
+;; With double prefix ARG (C-u C-u), continue previous conversation."
+;;   (interactive "P")
+;;   (let* ((dir (if (and arg (not (equal arg '(16))))
+;;                   (read-directory-name "Project directory: ")
+;;                 (funcall #'project-root (project-current t))))
+;;          (continue (equal arg '(16))))
+;;     (claude-code--start dir arg continue)))
 
 ;;;###autoload
 (defun claude-code-send-region (&optional arg)
@@ -459,16 +470,6 @@ switch to Claude buffer."
       (claude-code--do-send-command full-text)
       (when (equal arg '(16)) ; Only switch buffer with C-u C-u
         (switch-to-buffer (claude-code--buffer-name))))))
-
-;;;###autoload
-(defun claude-code-current-directory (&optional arg)
-  "Start Claude in the current directory.
-
-With single prefix ARG (C-u), switch to the Claude buffer after starting.
-With double prefix ARG (C-u C-u), continue previous conversation."
-  (interactive "P")
-  (let ((continue (equal arg '(16))))
-    (claude-code--start default-directory arg continue)))
 
 ;;;###autoload
 (defun claude-code-toggle ()
