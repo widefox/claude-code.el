@@ -262,7 +262,7 @@ If not in a project and no buffer file, return \"*claude*\"."
   (let ((dir (claude-code--directory)))
     (if dir
         (format "*claude:%s*" dir)
-      "*claude*")))
+      (error "Cannot determine Claude directory - no `default-directory'!"))))
 
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
