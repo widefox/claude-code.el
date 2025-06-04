@@ -553,7 +553,7 @@ having to switch to the REPL buffer."
 
 Sends <escape><escape> to the Claude Code REPL."
   (interactive)
-  (if-let ((claude-code-buffer (claude-code--get-claude-buffer)))
+  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
       (with-current-buffer claude-code-buffer
         (eat-term-send-string eat-terminal "")
         (display-buffer claude-code-buffer))
