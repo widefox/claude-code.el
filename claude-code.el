@@ -264,6 +264,10 @@ If not in a project and no buffer file, return \"*claude*\"."
         (format "*claude:%s*" dir)
       (error "Cannot determine Claude directory - no `default-directory'!"))))
 
+(defun claude-code--show-not-running-message ()
+  "Show a message that Claude is not running in the current directory."
+  (message "Claude is not running in directory %s" (claude-code--directory)))
+
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
 
@@ -273,7 +277,7 @@ After sending the command, move point to the end of the buffer."
         (eat-term-send-string eat-terminal cmd)
         (eat-term-send-string eat-terminal (kbd "RET"))
         (display-buffer claude-code-buffer))
-    (error "Claude is not running")))
+    (claude-code--show-not-running-message)))
 
 (defun claude-code--setup-repl-faces ()
   "Setup faces for the Claude REPL buffer.
@@ -423,18 +427,6 @@ Returns a string with the errors or a message if no errors found."
    (t "No errors at point")))
 
 ;;;; Interactive Commands
-;;;###autoload
-;; (defun claude-code (&optional arg)
-;;   "Start Claude in an eat terminal and enable `claude-code-mode'.
-
-;; With single prefix ARG (C-u), prompt for the project directory.
-;; With double prefix ARG (C-u C-u), continue previous conversation."
-;;   (interactive "P")
-;;   (let* ((dir (if (and arg (not (equal arg '(16))))
-;;                   (read-directory-name "Project directory: ")
-;;                 (funcall #'project-root (project-current t))))
-;;          (continue (equal arg '(16))))
-;;     (claude-code--start dir arg continue)))
 
 ;;;###autoload
 (defun claude-code-send-region (&optional arg)
@@ -454,9 +446,9 @@ switch to Claude buffer."
                        (buffer-substring-no-properties (point-min) (point-max)))
                    (buffer-substring-no-properties (point-min) (point-max)))))
          (prompt (cond
-                  ((equal arg '(4)) ; C-u
+                  ((equal arg '(4))     ; C-u
                    (read-string "Instructions for Claude: "))
-                  ((equal arg '(16)) ; C-u C-u
+                  ((equal arg '(16))    ; C-u C-u
                    (read-string "Instructions for Claude: "))
                   (t nil)))
          (full-text (if prompt
@@ -464,7 +456,7 @@ switch to Claude buffer."
                       text)))
     (when full-text
       (claude-code--do-send-command full-text)
-      (when (equal arg '(16)) ; Only switch buffer with C-u C-u
+      (when (equal arg '(16))        ; Only switch buffer with C-u C-u
         (switch-to-buffer (claude-code--buffer-name))))))
 
 ;;;###autoload
@@ -478,7 +470,7 @@ If the Claude buffer doesn't exist, create it."
         (if (get-buffer-window claude-code-buffer)
             (delete-window (get-buffer-window claude-code-buffer))
           (display-buffer claude-code-buffer))
-      (error "Claude is not running"))))
+      (claude-code--show-not-running-message))))
 
 ;;;###autoload
 (defun claude-code-switch-to-buffer ()
@@ -486,7 +478,7 @@ If the Claude buffer doesn't exist, create it."
   (interactive)
   (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
       (switch-to-buffer claude-code-buffer)
-    (error "Claude is not running")))
+    (claude-code--show-not-running-message)))
 
 ;;;###autoload
 (defun claude-code-kill ()
@@ -499,7 +491,7 @@ If the Claude buffer doesn't exist, create it."
              ;; Remove advice when killing Claude
              (advice-remove 'eat--adjust-process-window-size #'claude-code--eat-adjust-process-window-size-advice)
              (message "Claude killed"))
-    (message "Claude is not running")))
+    (claude-code--show-not-running-message)))
 
 ;;;###autoload
 (defun claude-code-send-command (cmd &optional arg)
@@ -555,7 +547,7 @@ having to switch to the REPL buffer."
       (with-current-buffer claude-code-buffer
         (eat-term-send-string eat-terminal (kbd "ESC"))
         (display-buffer claude-code-buffer))
-    (error "Claude is not running")))
+    (claude-code--show-not-running-message)))
 
 (defun claude-code-fork ()
   "Jump to a previous conversation by invoking the Claude fork command.
@@ -610,7 +602,7 @@ Use `claude-code-exit-read-only-mode' to switch back to normal mode."
         (setq-local eat-invisible-cursor-type claude-code-read-only-mode-cursor-type)
         (eat--set-cursor nil :invisible)
         (message "Claude read-only mode enabled"))
-    (error "Claude is not running")))
+    (claude-code--show-not-running-message)))
 
 ;;;###autoload
 (defun claude-code-exit-read-only-mode ()
@@ -622,7 +614,7 @@ Use `claude-code-exit-read-only-mode' to switch back to normal mode."
         (setq-local eat-invisible-cursor-type nil)
         (eat--set-cursor nil :invisible)
         (message "Claude semi-char mode enabled"))
-    (error "Claude is not running")))
+    (claude-code--show-not-running-message)))
 
 ;;;###autoload
 (defun claude-code-toggle-read-only-mode ()
@@ -638,7 +630,7 @@ enter Claude commands."
         (if eat--semi-char-mode
             (claude-code-read-only-mode)
           (claude-code-exit-read-only-mode)))
-    (error "Claude is not running")))
+    (claude-code--show-not-running-message)))
 
 ;;;; Mode definition
 ;;;###autoload
