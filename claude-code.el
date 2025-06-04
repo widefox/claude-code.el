@@ -218,6 +218,33 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
    ])
 
 ;;;; Private util functions
+(defun claude-code--eat-adjust-process-window-size-advice (orig-fun &rest args)
+  "Prevent window size adjustment for Claude processes.
+
+This advice intercepts calls to ORIG-FUN and returns nil for processes
+marked as claude-code processes, effectively disabling window size
+adjustments for them.  ARGS are passed through to ORIG-FUN for non-Claude
+processes."
+  (let ((process
+         (cond
+          ;; If first arg is a process
+          ((and args (processp (car args)))
+           (car args))
+          ;; If first arg is a buffer
+          ((and args (bufferp (car args)))
+           (get-buffer-process (car args)))
+          ;; Try current buffer
+          ((get-buffer-process (current-buffer)))
+          ;; If we have eat-terminal in current buffer
+          ((and (boundp 'eat-terminal)
+                eat-terminal
+                (process-live-p eat-terminal))
+           eat-terminal))))
+    (if (and process
+             (process-get process 'claude-code-process))
+        nil
+      (apply orig-fun args))))
+
 (defun claude-code--get-claude-buffer ()
   "Return the Claude buffer if it exists, nil otherwise."
   (get-buffer claude-code--claude-buffer))
@@ -334,6 +361,8 @@ conversation."
 
       ;; Add window configuration change hook to keep buffer scrolled to bottom
       (add-hook 'window-configuration-change-hook #'claude-code--on-window-configuration-change nil t)
+      ;; Add advice to prevent window size adjustments
+      (advice-add 'eat--adjust-process-window-size :around #'claude-code--eat-adjust-process-window-size-advice)
       (run-hooks 'claude-code-start-hook)
 
       ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
@@ -458,6 +487,8 @@ If the Claude buffer doesn't exist, create it."
       (progn (with-current-buffer claude-code-buffer
                (eat-kill-process)
                (kill-buffer claude-code-buffer))
+             ;; Remove advice when killing Claude
+             (advice-remove 'eat--adjust-process-window-size #'claude-code--eat-adjust-process-window-size-advice)
              (message "Claude killed"))
     (message "Claude is not running")))
 
