@@ -382,15 +382,11 @@ With double prefix ARG (C-u C-u), continue previous conversation."
     ;; Set our custom synchronize scroll function
     (setq-local eat--synchronize-scroll-function #'claude-code--synchronize-scroll)
 
-    ;; Add window configuration change hook to keep buffer scrolled to bottom
-    (add-hook 'window-configuration-change-hook #'claude-code--on-window-configuration-change nil t)
-    ;; Add advice to prevent window size adjustments
-    (advice-add 'eat--adjust-process-window-size :around #'claude-code--eat-adjust-process-window-size-advice)
-    (run-hooks 'claude-code-start-hook)
+      ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
+      (sleep-for claude-code-startup-delay)
 
-    ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
-    (sleep-for claude-code-startup-delay)
-    (display-buffer buffer))
+      (run-hooks 'claude-code-start-hook)
+      (display-buffer buffer))
     (when arg
       (switch-to-buffer buffer))))
 
