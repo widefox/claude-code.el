@@ -158,6 +158,7 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
     (define-key map "k" 'claude-code-kill)
     (define-key map "m" 'claude-code-transient)
     (define-key map "n" 'claude-code-send-escape)
+    (define-key map "f" 'claude-code-fork)
     (define-key map "r" 'claude-code-send-region)
     (define-key map "s" 'claude-code-send-command)
     (define-key map "t" 'claude-code-toggle)
@@ -184,6 +185,7 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
     ("e" "Fix error at point" claude-code-fix-error-at-point)
     ("y" "Send <return> to Claude (\"Yes\")" claude-code-send-return)
     ("n" "Send <escape> to Claude (\"No\")" claude-code-send-escape)
+    ("f" "Fork (jump to previous conversation" claude-code-fork)
     ("/" "Slash Commands" claude-code-slash-commands)]])
 
 ;;;###autoload (autoload 'claude-code-slash-commands "claude-code" nil t)
@@ -503,6 +505,17 @@ having to switch to the REPL buffer."
   (if-let ((claude-code-buffer (claude-code--get-claude-buffer)))
       (with-current-buffer claude-code-buffer
         (eat-term-send-string eat-terminal (kbd "ESC"))
+        (display-buffer claude-code-buffer))
+    (error "Claude is not running")))
+
+(defun claude-code-fork ()
+  "Jump to a previous conversation by invoking the Claude fork command.
+
+Sends <escape><escape> to the Claude Code REPL."
+  (interactive)
+  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+      (with-current-buffer claude-code-buffer
+        (eat-term-send-string eat-terminal "")
         (display-buffer claude-code-buffer))
     (error "Claude is not running")))
 

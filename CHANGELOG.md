@@ -2,6 +2,16 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [0.2.4 - 2025-06-05]
+
+### Added
+- New `claude-code-fork` command to jump to previous conversations by sending escape-escape to Claude
+  - Bound to `C-c c f` in the command map
+  - Available in the transient menu
+
+### Changed
+- `claude-code-kill` now shows a message instead of throwing an error when Claude is not running
+
 ## [0.2.3] - 2025-05-23
 
 ### Fixed
