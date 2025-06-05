@@ -450,7 +450,7 @@ If the Claude buffer doesn't exist, create it."
                (eat-kill-process)
                (kill-buffer claude-code-buffer))
              (message "Claude killed"))
-    (error "Claude is not running")))
+    (message "Claude is not running")))
 
 ;;;###autoload
 (defun claude-code-send-command (cmd &optional arg)
@@ -513,7 +513,7 @@ having to switch to the REPL buffer."
 
 Sends <escape><escape> to the Claude Code REPL."
   (interactive)
-  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+  (if-let ((claude-code-buffer (claude-code--get-claude-buffer)))
       (with-current-buffer claude-code-buffer
         (eat-term-send-string eat-terminal "")
         (display-buffer claude-code-buffer))

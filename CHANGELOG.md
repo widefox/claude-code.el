@@ -2,7 +2,7 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
-## [0.2.4 - 2025-06-05]
+## [0.2.4] - 2025-06-05
 
 ### Added
 - New `claude-code-fork` command to jump to previous conversations by sending escape-escape to Claude
