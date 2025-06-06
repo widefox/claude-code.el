@@ -227,6 +227,65 @@ If not in a project and no buffer file return `default-directory'."
      ;; Case 3: No project and no buffer file
      (t default-directory))))
 
+(defun claude-code--find-all-claude-buffers ()
+  "Find all active Claude buffers across all directories.
+   
+Returns a list of buffer objects."
+  (cl-remove-if-not
+   (lambda (buf)
+     (string-match-p "^\\*claude:" (buffer-name buf)))
+   (buffer-list)))
+
+(defun claude-code--extract-directory-from-buffer-name (buffer-name)
+  "Extract the directory path from a Claude BUFFER-NAME.
+   
+For example, *claude:/path/to/project/* returns /path/to/project/."
+  (when (string-match "^\\*claude:\\(.+\\)\\*$" buffer-name)
+    (match-string 1 buffer-name)))
+
+(defun claude-code--prompt-for-claude-buffer ()
+  "Prompt user to select from available Claude buffers.
+   
+Returns the selected buffer or nil if cancelled."
+  (let* ((claude-buffers (claude-code--find-all-claude-buffers))
+         (choices (mapcar (lambda (buf)
+                            (let* ((name (buffer-name buf))
+                                   (dir (claude-code--extract-directory-from-buffer-name name)))
+                              (cons (format "%s (%s)"
+                                            (file-name-nondirectory (directory-file-name dir))
+                                            dir)
+                                    buf)))
+                          claude-buffers)))
+    (when choices
+      (let* ((selection (completing-read "Select Claude instance: "
+                                         (mapcar #'car choices)
+                                         nil t))
+             (selected-pair (cl-find selection choices :key #'car :test #'string=)))
+        (cdr selected-pair)))))
+
+(defun claude-code--get-or-prompt-for-buffer ()
+  "Get Claude buffer for current directory or prompt for selection.
+   
+First tries to get the buffer for the current directory. If it doesn't
+exist and there are other Claude buffers running, prompts the user to
+select one. Returns the buffer or nil."
+  (let ((current-buffer (get-buffer (claude-code--buffer-name))))
+    (if current-buffer
+        current-buffer
+      (let ((other-buffers (claude-code--find-all-claude-buffers)))
+        (when other-buffers
+          (claude-code--prompt-for-claude-buffer))))))
+
+(defun claude-code--switch-to-selected-buffer (selected-buffer)
+  "Switch to SELECTED-BUFFER if it's not the current project's buffer.
+   
+This is used after command functions to ensure we switch to the
+selected Claude buffer when the user chose a different project."
+  (when (and selected-buffer
+             (not (equal (buffer-name selected-buffer)
+                         (claude-code--buffer-name))))
+    (switch-to-buffer selected-buffer)))
+
 (defun claude-code--buffer-name ()
   "Generate the Claude buffer name based on project or current buffer file.
    
@@ -243,13 +302,17 @@ If not in a project and no buffer file, return \"*claude*\"."
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
 
-After sending the command, move point to the end of the buffer."
-  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
-      (with-current-buffer claude-code-buffer
-        (eat-term-send-string eat-terminal cmd)
-        (eat-term-send-string eat-terminal (kbd "RET"))
-        (display-buffer claude-code-buffer))
-    (claude-code--show-not-running-message)))
+After sending the command, move point to the end of the buffer.
+Returns the selected Claude buffer or nil."
+  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
+      (progn
+        (with-current-buffer claude-code-buffer
+          (eat-term-send-string eat-terminal cmd)
+          (eat-term-send-string eat-terminal (kbd "RET"))
+          (display-buffer claude-code-buffer))
+        claude-code-buffer)
+    (claude-code--show-not-running-message)
+    nil))
 
 (defun claude-code--setup-repl-faces ()
   "Setup faces for the Claude REPL buffer.
@@ -305,9 +368,9 @@ possible, preventing the scrolling up issue when editing other buffers."
           (set-window-start window term-beginning))))))
 
 (defun claude-code--on-window-configuration-change ()
-  "Handle window configuration changes for Claude buffer.
+  "Handle window configuration change for Claude buffer.
 
-Ensures the Claude buffer stays scrolled to the bottom when window
+Ensure the Claude buffer stays scrolled to the bottom when window
 configuration changes (e.g., when minibuffer opens/closes)."
   (when-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
     (with-current-buffer claude-code-buffer
@@ -323,8 +386,8 @@ root directory. Otherwise start in the directory of the current buffer
 file, or the current value of `default-directory' if no project and no
 buffer file.
 
-With single prefix ARG (C-u), prompt for the project directory.
-With double prefix ARG (C-u C-u), continue previous conversation."
+With single prefix ARG (\\[universal-argument]), prompt for the project directory.
+With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue previous conversation."
   (interactive "P")
   
   ;; Forward declare variables to avoid compilation warnings
@@ -428,9 +491,9 @@ switch to Claude buffer."
                         (format "%s\n\n%s" prompt text)
                       text)))
     (when full-text
-      (claude-code--do-send-command full-text)
-      (when (equal arg '(16))        ; Only switch buffer with C-u C-u
-        (switch-to-buffer (claude-code--buffer-name))))))
+      (let ((selected-buffer (claude-code--do-send-command full-text)))
+        (when (and (equal arg '(16)) selected-buffer)  ; Only switch buffer with C-u C-u
+          (switch-to-buffer selected-buffer))))))
 
 ;;;###autoload
 (defun claude-code-toggle ()
@@ -438,7 +501,7 @@ switch to Claude buffer."
 
 If the Claude buffer doesn't exist, create it."
   (interactive)
-  (let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+  (let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
     (if claude-code-buffer
         (if (get-buffer-window claude-code-buffer)
             (delete-window (get-buffer-window claude-code-buffer))
@@ -449,7 +512,7 @@ If the Claude buffer doesn't exist, create it."
 (defun claude-code-switch-to-buffer ()
   "Switch to the Claude buffer if it exists."
   (interactive)
-  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
       (switch-to-buffer claude-code-buffer)
     (claude-code--show-not-running-message)))
 
@@ -457,7 +520,7 @@ If the Claude buffer doesn't exist, create it."
 (defun claude-code-kill ()
   "Kill Claude process and close its window."
   (interactive)
-  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
       (progn (with-current-buffer claude-code-buffer
                (eat-kill-process)
                (kill-buffer claude-code-buffer))
@@ -470,9 +533,9 @@ If the Claude buffer doesn't exist, create it."
 
 With prefix ARG, switch to the Claude buffer after sending CMD."
   (interactive "sClaude command: \nP")
-  (claude-code--do-send-command cmd)
-  (when arg
-    (switch-to-buffer (claude-code--buffer-name))))
+  (let ((selected-buffer (claude-code--do-send-command cmd)))
+    (when (and arg selected-buffer)
+      (switch-to-buffer selected-buffer))))
 
 ;;;###autoload
 (defun claude-code-send-command-with-context (cmd &optional arg)
@@ -494,9 +557,9 @@ With prefix ARG, switch to the Claude buffer after sending CMD."
                                        file-name
                                        line-info)
                              cmd)))
-    (claude-code--do-send-command cmd-with-context)
-    (when arg
-      (switch-to-buffer (claude-code--buffer-name)))))
+    (let ((selected-buffer (claude-code--do-send-command cmd-with-context)))
+      (when (and arg selected-buffer)
+        (switch-to-buffer selected-buffer)))))
 
 ;;;###autoload
 (defun claude-code-send-return ()
@@ -514,7 +577,7 @@ having to switch to the REPL buffer."
 This is useful for saying \"No\" when Claude asks for confirmation without
 having to switch to the REPL buffer."
   (interactive)
-  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
       (with-current-buffer claude-code-buffer
         (eat-term-send-string eat-terminal (kbd "ESC"))
         (display-buffer claude-code-buffer))
@@ -525,7 +588,7 @@ having to switch to the REPL buffer."
 
 Sends <escape><escape> to the Claude Code REPL."
   (interactive)
-  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
       (with-current-buffer claude-code-buffer
         (eat-term-send-string eat-terminal "")
         (display-buffer claude-code-buffer))
@@ -552,9 +615,9 @@ With prefix ARG, switch to the Claude buffer after sending."
         (message "No errors found at point")
       (let ((command (format "Fix this error in %s:\nDo not run any external linter or other program, just fix the error at point using the context provided in the error message: <%s>"
                              file-name error-text)))
-        (claude-code--do-send-command command)
-        (when arg
-          (switch-to-buffer (claude-code--buffer-name)))))))
+        (let ((selected-buffer (claude-code--do-send-command command)))
+          (when (and arg selected-buffer)
+            (switch-to-buffer selected-buffer)))))))
 
 ;;;###autoload
 (defun claude-code-read-only-mode ()
@@ -567,7 +630,7 @@ enter Claude commands.
 
 Use `claude-code-exit-read-only-mode' to switch back to normal mode."
   (interactive)
-  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
       (with-current-buffer claude-code-buffer
         (eat-emacs-mode)
         (setq-local eat-invisible-cursor-type claude-code-read-only-mode-cursor-type)
@@ -579,7 +642,7 @@ Use `claude-code-exit-read-only-mode' to switch back to normal mode."
 (defun claude-code-exit-read-only-mode ()
   "Exit read-only mode and return to normal mode (eat semi-char mode)."
   (interactive)
-  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
       (with-current-buffer claude-code-buffer
         (eat-semi-char-mode)
         (setq-local eat-invisible-cursor-type nil)
@@ -596,7 +659,7 @@ regular buffer. This mode is useful for selecting text in the Claude
 buffer. However, you are not allowed to change the buffer contents or
 enter Claude commands."
   (interactive)
-  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
+  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
       (with-current-buffer claude-code-buffer
         (if eat--semi-char-mode
             (claude-code-read-only-mode)
