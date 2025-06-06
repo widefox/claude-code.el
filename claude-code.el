@@ -296,8 +296,8 @@ If not in a project and no buffer file, raise an error."
       (error "Cannot determine Claude directory - no `default-directory'!"))))
 
 (defun claude-code--show-not-running-message ()
-  "Show a message that Claude is not running in the current directory."
-  (message "Claude is not running in directory %s" (claude-code--directory)))
+  "Show a message that Claude is not running in any directory."
+  (message "Claude is not running"))
 
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
