@@ -292,7 +292,7 @@ selected Claude buffer when the user chose a different project."
 If not in a project and no buffer file, raise an error."
   (let ((dir (claude-code--directory)))
     (if dir
-        (format "*claude:%s*" (file-truename dir))
+        (format "*claude:%s*" (abbreviate-file-name (file-truename dir)))
       (error "Cannot determine Claude directory - no `default-directory'!"))))
 
 (defun claude-code--show-not-running-message ()
