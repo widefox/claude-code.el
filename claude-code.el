@@ -234,7 +234,7 @@ If not in a project and no buffer file return `default-directory'."
 If not in a project and no buffer file, return \"*claude*\"."
   (let ((dir (claude-code--directory)))
     (if dir
-        (format "*claude:%s*" dir)
+        (format "*claude:%s*" (file-truename dir))
       (error "Cannot determine Claude directory - no `default-directory'!"))))
 
 (defun claude-code--show-not-running-message ()
