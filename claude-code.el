@@ -375,7 +375,7 @@ With double prefix ARG (C-u C-u), continue previous conversation."
       (let ((process-adaptive-read-buffering nil))
         (apply #'eat-make trimmed-buffer-name claude-code-program nil program-switches)))
     
-    ;; Set eat repl faces to inherit from claude-code-repl-face 
+    ;; Set eat repl faces to inherit from claude-code-repl-face
     (claude-code--setup-repl-faces)
 
     ;; Turn off shell integration, as we don't need it for Claude
@@ -386,11 +386,11 @@ With double prefix ARG (C-u C-u), continue previous conversation."
     ;; Set our custom synchronize scroll function
     (setq-local eat--synchronize-scroll-function #'claude-code--synchronize-scroll)
 
-      ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
-      (sleep-for claude-code-startup-delay)
+    ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
+    (sleep-for claude-code-startup-delay)
 
-      (run-hooks 'claude-code-start-hook)
-      (display-buffer buffer))
+    (run-hooks 'claude-code-start-hook)
+    (display-buffer buffer)
     (when arg
       (switch-to-buffer buffer))))
 
@@ -554,7 +554,7 @@ having to switch to the REPL buffer."
 
 Sends <escape><escape> to the Claude Code REPL."
   (interactive)
-  (if-let ((claude-code-buffer (claude-code--get-claude-buffer)))
+  (if-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
       (with-current-buffer claude-code-buffer
         (eat-term-send-string eat-terminal "")
         (display-buffer claude-code-buffer))
