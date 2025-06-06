@@ -293,7 +293,7 @@ possible, preventing the scrolling up issue when editing other buffers."
 (defun claude-code--on-window-configuration-change ()
   "Handle window configuration changes for Claude buffer.
 
-Ensures the Claude buffer stays scrolled to the bottom when window all
+Ensures the Claude buffer stays scrolled to the bottom when window
 configuration changes (e.g., when minibuffer opens/closes)."
   (when-let ((claude-buffer (claude-code--get-claude-buffer)))
     (with-current-buffer claude-buffer
@@ -320,9 +320,18 @@ conversation."
       (setq-local eat-term-name claude-code-term-name)
       (let ((process-adaptive-read-buffering nil))
         (apply #'eat-make "claude" claude-code-program nil program-switches))
+
+      ;; Set eat repl faces to inherit from claude-code-repl-face 
       (claude-code--setup-repl-faces)
+
+      ;; Turn off shell integration, as we don't need it for Claude
+      (setq-local eat-enable-directory-tracking t
+                  eat-enable-shell-command-history nil
+                  eat-enable-shell-prompt-annotation nil)
+      
       ;; Set our custom synchronize scroll function
       (setq-local eat--synchronize-scroll-function #'claude-code--synchronize-scroll)
+
       ;; Add window configuration change hook to keep buffer scrolled to bottom
       (add-hook 'window-configuration-change-hook #'claude-code--on-window-configuration-change nil t)
       (run-hooks 'claude-code-start-hook)

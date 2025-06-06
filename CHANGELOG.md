@@ -2,6 +2,11 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- Disabled unnecessary shell integration features (command history and prompt annotation) to improve performance
+
 ## [0.2.4] - 2025-06-05
 
 ### Added
