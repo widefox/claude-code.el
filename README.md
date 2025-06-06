@@ -5,6 +5,7 @@ An Emacs interface for [Claude Code CLI](https://github.com/anthropics/claude-co
 ## Features
 
 - Start, stop, and toggle Claude Code sessions directly from Emacs
+- Support for multiple Claude instances across different projects and directories
 - Send commands to Claude with or without file/line context
 - Quick access to all Claude slash commands via transient menus
 - Customizable key bindings and appearance settings
@@ -200,9 +201,22 @@ The cursor appearance in read-only mode can be customized via the `claude-code-r
 (setq claude-code-read-only-mode-cursor-type 'bar)
 ```
 
+## Multiple Claude Instances
+
+`claude-code.el` supports running multiple Claude instances across different projects and directories. Each Claude instance is associated with a specific directory (project root, file directory, or current directory).
+
+### Instance Management
+
+- When you start Claude with `claude-code`, it creates an instance for the current directory
+- Buffer names follow the format `*claude:/path/to/directory*` to clearly identify each instance
+- If you're in a directory without a Claude instance but have instances running in other directories, you'll be prompted to select one
+- Your selection is remembered for that directory, so you won't be prompted again
+- To start a new instance instead of selecting an existing one, cancel the prompt with `C-g`
+
+This allows you to have separate Claude conversations for different projects while easily switching between them or sharing a Claude instance across related directories.
+
 ## Limitations
 
-- Currently, `claude-code.el` only supports running one Claude Code process at a time.
 - `claude-code.el` only supports using [eat](https://codeberg.org/akib/emacs-eat) for the Claude Code terminal window. Eat provides better rendering with less flickering and visual artifacts compared to other terminal emulators like ansi-term and vterm in testing.
 
 ## Contributing
