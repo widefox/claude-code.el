@@ -143,6 +143,13 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
 (declare-function flycheck-error-line "flycheck")
 (declare-function flycheck-error-message "flycheck")
 
+;;;; Internal state variables
+(defvar claude-code--directory-buffer-map (make-hash-table :test 'equal)
+  "Hash table mapping directories to user-selected Claude buffers.
+Keys are directory paths, values are buffer objects.
+This allows remembering which Claude instance the user selected
+for each directory across multiple invocations.")
+
 ;;;; Key bindings
 ;;;###autoload (autoload 'claude-code-command-map "claude-code")
 (defvar claude-code-command-map
@@ -246,8 +253,10 @@ For example, *claude:/path/to/project/* returns /path/to/project/."
 (defun claude-code--prompt-for-claude-buffer ()
   "Prompt user to select from available Claude buffers.
    
-Returns the selected buffer or nil if canceled."
-  (let* ((claude-buffers (claude-code--find-all-claude-buffers))
+Returns the selected buffer or nil if canceled. If a buffer is selected,
+it's remembered for the current directory."
+  (let* ((current-dir (claude-code--directory))
+         (claude-buffers (claude-code--find-all-claude-buffers))
          (choices (mapcar (lambda (buf)
                             (let* ((name (buffer-name buf))
                                    (dir (claude-code--extract-directory-from-buffer-name name)))
@@ -260,24 +269,35 @@ Returns the selected buffer or nil if canceled."
       (let* ((selection (completing-read
                          (substitute-command-keys
                           (format "No Claude instance running in %s. Cancel (\\[keyboard-quit]), or select Claude instance: "
-                                  (claude-code--directory)))
+                                  current-dir))
                          (mapcar #'car choices)
                          nil t))
-             (selected-pair (cl-find selection choices :key #'car :test #'string=)))
-        (cdr selected-pair)))))
+             (selected-pair (cl-find selection choices :key #'car :test #'string=))
+             (selected-buffer (cdr selected-pair)))
+        ;; Remember the selection for this directory
+        (when selected-buffer
+          (puthash current-dir selected-buffer claude-code--directory-buffer-map))
+        selected-buffer))))
 
 (defun claude-code--get-or-prompt-for-buffer ()
   "Get Claude buffer for current directory or prompt for selection.
    
 First tries to get the buffer for the current directory. If it doesn't
-exist and there are other Claude buffers running, prompts the user to
+exist, checks if there's a remembered selection for this directory.
+If not, and there are other Claude buffers running, prompts the user to
 select one. Returns the buffer or nil."
-  (let ((current-buffer (get-buffer (claude-code--buffer-name))))
+  (let ((current-buffer (get-buffer (claude-code--buffer-name)))
+        (current-dir (claude-code--directory)))
     (if current-buffer
         current-buffer
-      (let ((other-buffers (claude-code--find-all-claude-buffers)))
-        (when other-buffers
-          (claude-code--prompt-for-claude-buffer))))))
+      ;; Check for remembered selection for this directory
+      (let ((remembered-buffer (gethash current-dir claude-code--directory-buffer-map)))
+        (if (and remembered-buffer (buffer-live-p remembered-buffer))
+            remembered-buffer
+          ;; No valid remembered buffer, check for other Claude instances
+          (let ((other-buffers (claude-code--find-all-claude-buffers)))
+            (when other-buffers
+              (claude-code--prompt-for-claude-buffer))))))))
 
 (defun claude-code--switch-to-selected-buffer (selected-buffer)
   "Switch to SELECTED-BUFFER if it's not the current project's buffer.
@@ -301,6 +321,17 @@ If not in a project and no buffer file, raise an error."
 (defun claude-code--show-not-running-message ()
   "Show a message that Claude is not running in any directory."
   (message "Claude is not running"))
+
+(defun claude-code--cleanup-directory-mapping ()
+  "Remove entries from directory-buffer map when this buffer is killed.
+   
+This function is added to `kill-buffer-hook' in Claude buffers to clean up
+the remembered directory->buffer associations."
+  (let ((dying-buffer (current-buffer)))
+    (maphash (lambda (dir buffer)
+               (when (eq buffer dying-buffer)
+                 (remhash dir claude-code--directory-buffer-map)))
+             claude-code--directory-buffer-map)))
 
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
@@ -433,6 +464,9 @@ With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue
 
       ;; Add window configuration change hook to keep buffer scrolled to bottom
       (add-hook 'window-configuration-change-hook #'claude-code--on-window-configuration-change nil t)
+      
+      ;; Add cleanup hook to remove directory mappings when buffer is killed
+      (add-hook 'kill-buffer-hook #'claude-code--cleanup-directory-mapping nil t)
 
       ;; run start hooks and show the claude buffer
       (run-hooks 'claude-code-start-hook)
