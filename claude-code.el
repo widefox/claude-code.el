@@ -246,7 +246,7 @@ For example, *claude:/path/to/project/* returns /path/to/project/."
 (defun claude-code--prompt-for-claude-buffer ()
   "Prompt user to select from available Claude buffers.
    
-Returns the selected buffer or nil if cancelled."
+Returns the selected buffer or nil if canceled."
   (let* ((claude-buffers (claude-code--find-all-claude-buffers))
          (choices (mapcar (lambda (buf)
                             (let* ((name (buffer-name buf))
@@ -257,9 +257,12 @@ Returns the selected buffer or nil if cancelled."
                                     buf)))
                           claude-buffers)))
     (when choices
-      (let* ((selection (completing-read "Select Claude instance: "
-                                         (mapcar #'car choices)
-                                         nil t))
+      (let* ((selection (completing-read
+                         (substitute-command-keys
+                          (format "No Claude instance running in %s. Cancel (\\[keyboard-quit]), or select Claude instance: "
+                                  (claude-code--directory)))
+                         (mapcar #'car choices)
+                         nil t))
              (selected-pair (cl-find selection choices :key #'car :test #'string=)))
         (cdr selected-pair)))))
 
