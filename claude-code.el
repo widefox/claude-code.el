@@ -289,7 +289,7 @@ selected Claude buffer when the user chose a different project."
 (defun claude-code--buffer-name ()
   "Generate the Claude buffer name based on project or current buffer file.
    
-If not in a project and no buffer file, return \"*claude*\"."
+If not in a project and no buffer file, raise an error."
   (let ((dir (claude-code--directory)))
     (if dir
         (format "*claude:%s*" (file-truename dir))
@@ -368,14 +368,14 @@ possible, preventing the scrolling up issue when editing other buffers."
           (set-window-start window term-beginning))))))
 
 (defun claude-code--on-window-configuration-change ()
-  "Handle window configuration change for Claude buffer.
+  "Handle window configuration change for Claude buffers.
 
-Ensure the Claude buffer stays scrolled to the bottom when window
+Ensure all Claude buffers stay scrolled to the bottom when window
 configuration changes (e.g., when minibuffer opens/closes)."
-  (when-let ((claude-code-buffer (get-buffer (claude-code--buffer-name))))
-    (with-current-buffer claude-code-buffer
-      ;; Get all windows showing the Claude buffer
-      (if-let ((windows (get-buffer-window-list claude-code-buffer nil t)))
+  (dolist (claude-buffer (claude-code--find-all-claude-buffers))
+    (with-current-buffer claude-buffer
+      ;; Get all windows showing this Claude buffer
+      (when-let ((windows (get-buffer-window-list claude-buffer nil t)))
         (claude-code--synchronize-scroll windows)))))
 
 (defun claude-code (&optional arg)
@@ -423,6 +423,9 @@ With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue
 
       ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
       (sleep-for claude-code-startup-delay)
+
+      ;; Add window configuration change hook to keep buffer scrolled to bottom
+      (add-hook 'window-configuration-change-hook #'claude-code--on-window-configuration-change nil t)
 
       ;; run start hooks and show the claude buffer
       (run-hooks 'claude-code-start-hook)
