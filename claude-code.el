@@ -150,7 +150,6 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
     (define-key map "/" 'claude-code-slash-commands)
     (define-key map "b" 'claude-code-switch-to-buffer)
     (define-key map "c" 'claude-code)
-    (define-key map "d" 'claude-code-current-directory)
     (define-key map "e" 'claude-code-fix-error-at-point)
     (define-key map "k" 'claude-code-kill)
     (define-key map "m" 'claude-code-transient)
