@@ -156,6 +156,18 @@ everywhere else you can customize the `claude-code-repl-face`:
    '(claude-code-repl-face ((t (:family "JuliaMono")))))
 ```
 
+### Reducing Flickering on Window Configuration Changes
+
+To reduce flickering in the Claude buffer on window configuration changes, you can adjust eat latency variables in a hook. This reduces flickering at the cost of some increased latency:
+
+```elisp
+  ;; reduce flickering
+  (add-hook 'claude-code-start-hook
+            (lambda ()
+              (setq-local eat-minimum-latency 0.08
+                          eat-maximum-latency 0.2)))
+```
+
 ## Demo
 
 ### GIF Demo
