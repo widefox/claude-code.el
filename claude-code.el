@@ -28,14 +28,14 @@
 (declare-function eat-term-display-beginning "eat" (terminal))
 
 ;;;; Customization options
+(defgroup claude-code nil
+  "Claude AI interface for Emacs."
+  :group 'tools)
+
 (defface claude-code-repl-face
   nil
   "Face for Claude REPL."
   :group 'claude-code)
-
-(defgroup claude-code nil
-  "Claude AI interface for Emacs."
-  :group 'tools)
 
 (defcustom claude-code-term-name "xterm-256color"
   "Terminal type to use for Claude REPL."
@@ -214,33 +214,6 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
    ])
 
 ;;;; Private util functions
-(defun claude-code--eat-adjust-process-window-size-advice (orig-fun &rest args)
-  "Prevent window size adjustment for Claude processes.
-
-This advice intercepts calls to ORIG-FUN and returns nil for processes
-marked as claude-code processes, effectively disabling window size
-adjustments for them.  ARGS are passed through to ORIG-FUN for non-Claude
-processes."
-  (let ((process
-         (cond
-          ;; If first arg is a process
-          ((and args (processp (car args)))
-           (car args))
-          ;; If first arg is a buffer
-          ((and args (bufferp (car args)))
-           (get-buffer-process (car args)))
-          ;; Try current buffer
-          ((get-buffer-process (current-buffer)))
-          ;; If we have eat-terminal in current buffer
-          ((and (boundp 'eat-terminal)
-                eat-terminal
-                (process-live-p eat-terminal))
-           eat-terminal))))
-    (if (and process
-             (process-get process 'claude-code-process))
-        nil
-      (apply orig-fun args))))
-
 (defun claude-code--directory ()
   "Get get the root Claude directory for the current buffer.
    
@@ -489,8 +462,6 @@ If the Claude buffer doesn't exist, create it."
       (progn (with-current-buffer claude-code-buffer
                (eat-kill-process)
                (kill-buffer claude-code-buffer))
-             ;; Remove advice when killing Claude
-             (advice-remove 'eat--adjust-process-window-size #'claude-code--eat-adjust-process-window-size-advice)
              (message "Claude killed"))
     (claude-code--show-not-running-message)))
 
