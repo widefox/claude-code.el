@@ -94,6 +94,35 @@ Access all commands through the transient menu with `C-c c m`.
 
 For quick access to Claude slash commands like `/help`, `/clear`, or `/compact`, use `C-c c /` to open the slash commands menu.
 
+### Read-Only Mode for Text Selection
+
+In the Claude terminal, you can switch to a read-only mode to select and copy text:
+
+- `C-c C-e` (`eat-emacs-mode`) - Switch to read-only mode with normal Emacs cursor for text selection
+- `C-c C-j` (`semi-char-mode`) - Return to normal terminal mode
+
+The cursor appearance in read-only mode can be customized via the `claude-code-read-only-mode-cursor-type` variable:
+
+```elisp
+;; Customize cursor type in read-only mode (default is 'box)
+;; Options: 'box, 'hollow, 'bar, 'hbar, or nil
+(setq claude-code-read-only-mode-cursor-type 'bar)
+```
+
+### Multiple Claude Instances
+
+`claude-code.el` supports running multiple Claude instances across different projects and directories. Each Claude instance is associated with a specific directory (project root, file directory, or current directory).
+
+#### Instance Management
+
+- When you start Claude with `claude-code`, it creates an instance for the current directory
+- Buffer names follow the format `*claude:/path/to/directory*` to clearly identify each instance
+- If you're in a directory without a Claude instance but have instances running in other directories, you'll be prompted to select one
+- Your selection is remembered for that directory, so you won't be prompted again
+- To start a new instance instead of selecting an existing one, cancel the prompt with `C-g`
+
+This allows you to have separate Claude conversations for different projects while easily switching between them or sharing a Claude instance across related directories.
+
 ## Customization
 
 ```elisp
@@ -185,35 +214,6 @@ This [demo](./demo.gif) shows claude-code.el in action, including toggling the C
 [![The Emacs Claude Code Package](https://img.youtube.com/vi/K8sCVLmFyyU/0.jpg)](https://www.youtube.com/watch?v=K8sCVLmFyyU)
 
 Check out this [video demo](https://www.youtube.com/watch?v=K8sCVLmFyyU) demonstrating the claude-code.el package. This video was kindly created and shared by a user of the package.
-
-### Read-Only Mode for Text Selection
-
-In the Claude terminal, you can switch to a read-only mode to select and copy text:
-
-- `C-c C-e` (`eat-emacs-mode`) - Switch to read-only mode with normal Emacs cursor for text selection
-- `C-c C-j` (`semi-char-mode`) - Return to normal terminal mode
-
-The cursor appearance in read-only mode can be customized via the `claude-code-read-only-mode-cursor-type` variable:
-
-```elisp
-;; Customize cursor type in read-only mode (default is 'box)
-;; Options: 'box, 'hollow, 'bar, 'hbar, or nil
-(setq claude-code-read-only-mode-cursor-type 'bar)
-```
-
-## Multiple Claude Instances
-
-`claude-code.el` supports running multiple Claude instances across different projects and directories. Each Claude instance is associated with a specific directory (project root, file directory, or current directory).
-
-### Instance Management
-
-- When you start Claude with `claude-code`, it creates an instance for the current directory
-- Buffer names follow the format `*claude:/path/to/directory*` to clearly identify each instance
-- If you're in a directory without a Claude instance but have instances running in other directories, you'll be prompted to select one
-- Your selection is remembered for that directory, so you won't be prompted again
-- To start a new instance instead of selecting an existing one, cancel the prompt with `C-g`
-
-This allows you to have separate Claude conversations for different projects while easily switching between them or sharing a Claude instance across related directories.
 
 ## Limitations
 
