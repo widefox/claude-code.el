@@ -396,7 +396,7 @@ With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue
   (let* ((dir (if (and arg (not (equal arg '(16))))
                   (read-directory-name "Project directory: ")
                 (claude-code--directory)))
-         (continue (equal arg '(16)))(default-directory dir)
+         (continue (equal arg '(16))) (default-directory dir)
          (buffer-name (claude-code--buffer-name))
          (trimmed-buffer-name (string-trim-right (string-trim buffer-name "\\*") "\\*"))
          (buffer (get-buffer-create buffer-name))
@@ -408,8 +408,12 @@ With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue
       (cd dir)
       (setq-local eat-term-name claude-code-term-name)
       (let ((process-adaptive-read-buffering nil))
-        (apply #'eat-make trimmed-buffer-name claude-code-program nil program-switches))
-    
+        (condition-case nil
+            (apply #'eat-make trimmed-buffer-name claude-code-program nil program-switches)
+            (error
+             (error "error starting claude")
+             (signal 'claude-start-error "error starting claude"))))
+      
       ;; Set eat repl faces to inherit from claude-code-repl-face
       (claude-code--setup-repl-faces)
 
