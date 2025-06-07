@@ -176,9 +176,6 @@ Using a font with good Unicode support helps avoid flickering while Claude Code 
 ```elisp
 (setq use-default-font-for-symbols nil)
 (set-fontset-font t 'unicode (font-spec :family "JuliaMono"))
-
-;; for emoji characters on MacOS
-(set-fontset-font t 'unicode (font-spec :family "Apple Color Emoji") nil 'append)
 ```
 
 If instead you want to use a particular font just for the Claude Code REPL but use a different font
