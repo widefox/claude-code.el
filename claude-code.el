@@ -614,12 +614,47 @@ If the Claude buffer doesn't exist, create it."
       (claude-code--show-not-running-message))))
 
 ;;;###autoload
-(defun claude-code-switch-to-buffer ()
-  "Switch to the Claude buffer if it exists."
-  (interactive)
-  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
-      (switch-to-buffer claude-code-buffer)
-    (claude-code--show-not-running-message)))
+(defun claude-code-switch-to-buffer (&optional arg)
+  "Switch to the Claude buffer if it exists.
+   
+With prefix ARG, show all Claude instances across all directories."
+  (interactive "P")
+  (if arg
+      ;; With prefix arg, show all Claude instances
+      (let ((all-buffers (claude-code--find-all-claude-buffers)))
+        (cond
+         ((null all-buffers)
+          (claude-code--show-not-running-message))
+         ((= (length all-buffers) 1)
+          ;; Only one buffer, just switch to it
+          (switch-to-buffer (car all-buffers)))
+         (t
+          ;; Multiple buffers, let user choose
+          (let* ((choices (mapcar (lambda (buf)
+                                    (let* ((name (buffer-name buf))
+                                           (dir (claude-code--extract-directory-from-buffer-name name))
+                                           (instance-name (claude-code--extract-instance-name-from-buffer-name name))
+                                           (display-name (if instance-name
+                                                             (format "%s:%s (%s)"
+                                                                     (file-name-nondirectory (directory-file-name dir))
+                                                                     instance-name
+                                                                     dir)
+                                                           (format "%s (%s)"
+                                                                   (file-name-nondirectory (directory-file-name dir))
+                                                                   dir))))
+                                      (cons display-name buf)))
+                                  all-buffers))
+                 (selection (completing-read
+                             "Select Claude instance: "
+                             (mapcar #'car choices)
+                             nil t))
+                 (selected-buffer (cdr (assoc selection choices))))
+            (when selected-buffer
+              (switch-to-buffer selected-buffer))))))
+    ;; Without prefix arg, use normal behavior
+    (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
+        (switch-to-buffer claude-code-buffer)
+      (claude-code--show-not-running-message))))
 
 ;;;###autoload
 (defun claude-code-kill ()
