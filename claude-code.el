@@ -243,12 +243,33 @@ Returns a list of buffer objects."
      (string-match-p "^\\*claude:" (buffer-name buf)))
    (buffer-list)))
 
+(defun claude-code--find-claude-buffers-for-directory (directory)
+  "Find all active Claude buffers for a specific DIRECTORY.
+   
+Returns a list of buffer objects."
+  (cl-remove-if-not
+   (lambda (buf)
+     (let ((buf-dir (claude-code--extract-directory-from-buffer-name (buffer-name buf))))
+       (and buf-dir
+            (string= (file-truename (abbreviate-file-name directory))
+                     (file-truename buf-dir)))))
+   (claude-code--find-all-claude-buffers)))
+
 (defun claude-code--extract-directory-from-buffer-name (buffer-name)
   "Extract the directory path from a Claude BUFFER-NAME.
    
-For example, *claude:/path/to/project/* returns /path/to/project/."
-  (when (string-match "^\\*claude:\\(.+\\)\\*$" buffer-name)
+For example, *claude:/path/to/project/* returns /path/to/project/.
+For example, *claude:/path/to/project/:tests* returns /path/to/project/."
+  (when (string-match "^\\*claude:\\([^:]+\\)\\(?::\\([^*]+\\)\\)?\\*$" buffer-name)
     (match-string 1 buffer-name)))
+
+(defun claude-code--extract-instance-name-from-buffer-name (buffer-name)
+  "Extract the instance name from a Claude BUFFER-NAME.
+   
+For example, *claude:/path/to/project/:tests* returns \"tests\".
+For example, *claude:/path/to/project/* returns nil."
+  (when (string-match "^\\*claude:\\([^:]+\\)\\(?::\\([^*]+\\)\\)?\\*$" buffer-name)
+    (match-string 2 buffer-name)))
 
 (defun claude-code--prompt-for-claude-buffer ()
   "Prompt user to select from available Claude buffers.
@@ -259,17 +280,23 @@ it's remembered for the current directory."
          (claude-buffers (claude-code--find-all-claude-buffers))
          (choices (mapcar (lambda (buf)
                             (let* ((name (buffer-name buf))
-                                   (dir (claude-code--extract-directory-from-buffer-name name)))
-                              (cons (format "%s (%s)"
-                                            (file-name-nondirectory (directory-file-name dir))
-                                            dir)
-                                    buf)))
+                                   (dir (claude-code--extract-directory-from-buffer-name name))
+                                   (instance-name (claude-code--extract-instance-name-from-buffer-name name))
+                                   (display-name (if instance-name
+                                                     (format "%s:%s (%s)"
+                                                             (file-name-nondirectory (directory-file-name dir))
+                                                             instance-name
+                                                             dir)
+                                                   (format "%s (%s)"
+                                                           (file-name-nondirectory (directory-file-name dir))
+                                                           dir))))
+                              (cons display-name buf)))
                           claude-buffers)))
     (when choices
       (let* ((selection (completing-read
                          (substitute-command-keys
                           (format "No Claude instance running in %s. Cancel (\\[keyboard-quit]), or select Claude instance: "
-                                  current-dir))
+                                  (abbreviate-file-name current-dir)))
                          (mapcar #'car choices)
                          nil t))
              (selected-pair (cl-find selection choices :key #'car :test #'string=))
@@ -282,14 +309,33 @@ it's remembered for the current directory."
 (defun claude-code--get-or-prompt-for-buffer ()
   "Get Claude buffer for current directory or prompt for selection.
    
-First tries to get the buffer for the current directory. If it doesn't
-exist, checks if there's a remembered selection for this directory.
-If not, and there are other Claude buffers running, prompts the user to
-select one. Returns the buffer or nil."
-  (let ((current-buffer (get-buffer (claude-code--buffer-name)))
-        (current-dir (claude-code--directory)))
-    (if current-buffer
-        current-buffer
+First checks for Claude buffers in the current directory. If there are
+multiple, prompts the user to select one. If there are none, checks if
+there's a remembered selection for this directory. If not, and there are
+other Claude buffers running, prompts the user to select one. Returns
+the buffer or nil."
+  (let* ((current-dir (claude-code--directory))
+         (dir-buffers (claude-code--find-claude-buffers-for-directory current-dir)))
+    (cond
+     ;; Multiple buffers for this directory - prompt for selection
+     ((> (length dir-buffers) 1)
+      (let* ((choices (mapcar (lambda (buf)
+                                (let ((instance-name (or (claude-code--extract-instance-name-from-buffer-name
+                                                          (buffer-name buf))
+                                                         "default")))
+                                  (cons instance-name buf)))
+                              dir-buffers))
+             (selection (completing-read
+                         (format "Select Claude instance for %s: "
+                                 (abbreviate-file-name current-dir))
+                         (mapcar #'car choices)
+                         nil t)))
+        (cdr (assoc selection choices))))
+     ;; Single buffer for this directory - use it
+     ((= (length dir-buffers) 1)
+      (car dir-buffers))
+     ;; No buffers for this directory - check remembered or prompt for other directories
+     (t
       ;; Check for remembered selection for this directory
       (let ((remembered-buffer (gethash current-dir claude-code--directory-buffer-map)))
         (if (and remembered-buffer (buffer-live-p remembered-buffer))
@@ -297,25 +343,27 @@ select one. Returns the buffer or nil."
           ;; No valid remembered buffer, check for other Claude instances
           (let ((other-buffers (claude-code--find-all-claude-buffers)))
             (when other-buffers
-              (claude-code--prompt-for-claude-buffer))))))))
+              (claude-code--prompt-for-claude-buffer)))))))))
 
 (defun claude-code--switch-to-selected-buffer (selected-buffer)
-  "Switch to SELECTED-BUFFER if it's not the current project's buffer.
+  "Switch to SELECTED-BUFFER if it's not the current buffer.
    
 This is used after command functions to ensure we switch to the
-selected Claude buffer when the user chose a different project."
+selected Claude buffer when the user chose a different instance."
   (when (and selected-buffer
-             (not (equal (buffer-name selected-buffer)
-                         (claude-code--buffer-name))))
+             (not (eq selected-buffer (current-buffer))))
     (switch-to-buffer selected-buffer)))
 
-(defun claude-code--buffer-name ()
+(defun claude-code--buffer-name (&optional instance-name)
   "Generate the Claude buffer name based on project or current buffer file.
    
+If INSTANCE-NAME is provided, include it in the buffer name.
 If not in a project and no buffer file, raise an error."
   (let ((dir (claude-code--directory)))
     (if dir
-        (format "*claude:%s*" (abbreviate-file-name (file-truename dir)))
+        (if instance-name
+            (format "*claude:%s:%s*" (abbreviate-file-name (file-truename dir)) instance-name)
+          (format "*claude:%s*" (abbreviate-file-name (file-truename dir))))
       (error "Cannot determine Claude directory - no `default-directory'!"))))
 
 (defun claude-code--show-not-running-message ()
@@ -430,8 +478,21 @@ With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue
   (let* ((dir (if (and arg (not (equal arg '(16))))
                   (read-directory-name "Project directory: ")
                 (claude-code--directory)))
+         (abbreviated-dir (abbreviate-file-name dir))
          (continue (equal arg '(16))) (default-directory dir)
-         (buffer-name (claude-code--buffer-name))
+         ;; Check for existing Claude instances in this directory
+         (existing-buffers (claude-code--find-claude-buffers-for-directory dir))
+         ;; Determine instance name
+         (instance-name (if existing-buffers
+                            (read-string (format "Instances already running for %s, new instance name (existing: %s): "
+                                                 abbreviated-dir
+                                                 (mapconcat (lambda (buf)
+                                                              (or (claude-code--extract-instance-name-from-buffer-name
+                                                                   (buffer-name buf))
+                                                                  "default"))
+                                                            existing-buffers ", ")))
+                          "default"))
+         (buffer-name (claude-code--buffer-name instance-name))
          (trimmed-buffer-name (string-trim-right (string-trim buffer-name "\\*") "\\*"))
          (buffer (get-buffer-create buffer-name))
          (program-switches (if continue
