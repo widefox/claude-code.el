@@ -271,36 +271,60 @@ For example, *claude:/path/to/project/* returns nil."
   (when (string-match "^\\*claude:\\([^:]+\\)\\(?::\\([^*]+\\)\\)?\\*$" buffer-name)
     (match-string 2 buffer-name)))
 
+(defun claude-code--buffer-display-name (buffer)
+  "Create a display name for Claude BUFFER.
+   
+Returns a formatted string like `project:instance (directory)' or
+`project (directory)'."
+  (let* ((name (buffer-name buffer))
+         (dir (claude-code--extract-directory-from-buffer-name name))
+         (instance-name (claude-code--extract-instance-name-from-buffer-name name)))
+    (if instance-name
+        (format "%s:%s (%s)"
+                (file-name-nondirectory (directory-file-name dir))
+                instance-name
+                dir)
+      (format "%s (%s)"
+              (file-name-nondirectory (directory-file-name dir))
+              dir))))
+
+(defun claude-code--buffers-to-choices (buffers &optional simple-format)
+  "Convert BUFFERS list to an alist of (display-name . buffer) pairs.
+   
+If SIMPLE-FORMAT is non-nil, use just the instance name as display name."
+  (mapcar (lambda (buf)
+            (let ((display-name (if simple-format
+                                    (or (claude-code--extract-instance-name-from-buffer-name
+                                         (buffer-name buf))
+                                        "default")
+                                  (claude-code--buffer-display-name buf))))
+              (cons display-name buf)))
+          buffers))
+
+(defun claude-code--select-buffer-from-choices (prompt buffers &optional simple-format)
+  "Prompt user to select a buffer from BUFFERS list using PROMPT.
+   
+If SIMPLE-FORMAT is non-nil, use simplified display names.
+Returns the selected buffer or nil."
+  (when buffers
+    (let* ((choices (claude-code--buffers-to-choices buffers simple-format))
+           (selection (completing-read prompt
+                                       (mapcar #'car choices)
+                                       nil t)))
+      (cdr (assoc selection choices)))))
+
 (defun claude-code--prompt-for-claude-buffer ()
   "Prompt user to select from available Claude buffers.
    
 Returns the selected buffer or nil if canceled. If a buffer is selected,
 it's remembered for the current directory."
   (let* ((current-dir (claude-code--directory))
-         (claude-buffers (claude-code--find-all-claude-buffers))
-         (choices (mapcar (lambda (buf)
-                            (let* ((name (buffer-name buf))
-                                   (dir (claude-code--extract-directory-from-buffer-name name))
-                                   (instance-name (claude-code--extract-instance-name-from-buffer-name name))
-                                   (display-name (if instance-name
-                                                     (format "%s:%s (%s)"
-                                                             (file-name-nondirectory (directory-file-name dir))
-                                                             instance-name
-                                                             dir)
-                                                   (format "%s (%s)"
-                                                           (file-name-nondirectory (directory-file-name dir))
-                                                           dir))))
-                              (cons display-name buf)))
-                          claude-buffers)))
-    (when choices
-      (let* ((selection (completing-read
-                         (substitute-command-keys
-                          (format "No Claude instance running in %s. Cancel (\\[keyboard-quit]), or select Claude instance: "
-                                  (abbreviate-file-name current-dir)))
-                         (mapcar #'car choices)
-                         nil t))
-             (selected-pair (cl-find selection choices :key #'car :test #'string=))
-             (selected-buffer (cdr selected-pair)))
+         (claude-buffers (claude-code--find-all-claude-buffers)))
+    (when claude-buffers
+      (let* ((prompt (substitute-command-keys
+                      (format "No Claude instance running in %s. Cancel (\\[keyboard-quit]), or select Claude instance: "
+                              (abbreviate-file-name current-dir))))
+             (selected-buffer (claude-code--select-buffer-from-choices prompt claude-buffers)))
         ;; Remember the selection for this directory
         (when selected-buffer
           (puthash current-dir selected-buffer claude-code--directory-buffer-map))
@@ -319,18 +343,11 @@ the buffer or nil."
     (cond
      ;; Multiple buffers for this directory - prompt for selection
      ((> (length dir-buffers) 1)
-      (let* ((choices (mapcar (lambda (buf)
-                                (let ((instance-name (or (claude-code--extract-instance-name-from-buffer-name
-                                                          (buffer-name buf))
-                                                         "default")))
-                                  (cons instance-name buf)))
-                              dir-buffers))
-             (selection (completing-read
-                         (format "Select Claude instance for %s: "
-                                 (abbreviate-file-name current-dir))
-                         (mapcar #'car choices)
-                         nil t)))
-        (cdr (assoc selection choices))))
+      (claude-code--select-buffer-from-choices
+       (format "Select Claude instance for %s: "
+               (abbreviate-file-name current-dir))
+       dir-buffers
+       t))  ; Use simple format (just instance names)
      ;; Single buffer for this directory - use it
      ((= (length dir-buffers) 1)
       (car dir-buffers))
@@ -630,25 +647,9 @@ With prefix ARG, show all Claude instances across all directories."
           (switch-to-buffer (car all-buffers)))
          (t
           ;; Multiple buffers, let user choose
-          (let* ((choices (mapcar (lambda (buf)
-                                    (let* ((name (buffer-name buf))
-                                           (dir (claude-code--extract-directory-from-buffer-name name))
-                                           (instance-name (claude-code--extract-instance-name-from-buffer-name name))
-                                           (display-name (if instance-name
-                                                             (format "%s:%s (%s)"
-                                                                     (file-name-nondirectory (directory-file-name dir))
-                                                                     instance-name
-                                                                     dir)
-                                                           (format "%s (%s)"
-                                                                   (file-name-nondirectory (directory-file-name dir))
-                                                                   dir))))
-                                      (cons display-name buf)))
-                                  all-buffers))
-                 (selection (completing-read
-                             "Select Claude instance: "
-                             (mapcar #'car choices)
-                             nil t))
-                 (selected-buffer (cdr (assoc selection choices))))
+          (let ((selected-buffer (claude-code--select-buffer-from-choices
+                                  "Select Claude instance: "
+                                  all-buffers)))
             (when selected-buffer
               (switch-to-buffer selected-buffer))))))
     ;; Without prefix arg, use normal behavior
@@ -657,15 +658,31 @@ With prefix ARG, show all Claude instances across all directories."
       (claude-code--show-not-running-message))))
 
 ;;;###autoload
-(defun claude-code-kill ()
-  "Kill Claude process and close its window."
-  (interactive)
-  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
-      (progn (with-current-buffer claude-code-buffer
-               (eat-kill-process)
-               (kill-buffer claude-code-buffer))
-             (message "Claude killed"))
-    (claude-code--show-not-running-message)))
+(defun claude-code-kill (&optional arg)
+  "Kill Claude process and close its window.
+   
+With prefix ARG, kill ALL Claude processes across all directories."
+  (interactive "P")
+  (if arg
+      ;; Kill all Claude instances
+      (let ((all-buffers (claude-code--find-all-claude-buffers)))
+        (if all-buffers
+            (progn
+              (dolist (buffer all-buffers)
+                (with-current-buffer buffer
+                  (eat-kill-process)
+                  (kill-buffer buffer)))
+              (message "Killed %d Claude instance%s"
+                       (length all-buffers)
+                       (if (= (length all-buffers) 1) "" "s")))
+          (claude-code--show-not-running-message)))
+    ;; Kill single instance
+    (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
+        (progn (with-current-buffer claude-code-buffer
+                 (eat-kill-process)
+                 (kill-buffer claude-code-buffer))
+               (message "Claude killed"))
+      (claude-code--show-not-running-message))))
 
 ;;;###autoload
 (defun claude-code-send-command (cmd &optional arg)
