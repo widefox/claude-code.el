@@ -7,9 +7,13 @@ All notable changes to claude-code.el will be documented in this file.
 ### Added
 
 - **New feature**: Launch repository-specific Claude sessions - work on multiple projects simultaneously with separate Claude instances
+- **New feature**: Support for multiple named Claude instances per directory (e.g., one for coding, another for tests)
+  - Prompts for instance name when creating additional instances in the same directory
+  - Buffer names now include instance names: `*claude:/path/to/project:instance-name*`
 - Intelligent instance selection: When switching between directories, claude-code.el prompts to select from existing Claude instances or start a new one
 - Instance memory: Your Claude instance selections are remembered per directory during the current Emacs session
 - Simplified startup behavior: `claude-code` now automatically detects the appropriate directory (project root, current file directory, or default directory)
+- Added prefix arg support to `claude-code-switch-to-buffer` - use `C-u` to see all Claude instances across all directories
 
 ### Changed
 
