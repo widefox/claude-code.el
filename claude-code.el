@@ -485,18 +485,21 @@ root directory. Otherwise start in the directory of the current buffer
 file, or the current value of `default-directory' if no project and no
 buffer file.
 
-With single prefix ARG (\\[universal-argument]), prompt for the project directory.
-With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue previous conversation."
+With single prefix ARG (\\[universal-argument]), switch to buffer after creating.
+With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue previous conversation.
+With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[universal-argument]), prompt for the project directory."
   (interactive "P")
   
   ;; Forward declare variables to avoid compilation warnings
   (require 'eat)
   
-  (let* ((dir (if (and arg (not (equal arg '(16))))
+  (let* ((dir (if (equal arg '(64))  ; Triple prefix
                   (read-directory-name "Project directory: ")
                 (claude-code--directory)))
          (abbreviated-dir (abbreviate-file-name dir))
-         (continue (equal arg '(16))) (default-directory dir)
+         (continue (equal arg '(16))) ; Double prefix
+         (switch-after (equal arg '(4))) ; Single prefix
+         (default-directory dir)
          ;; Check for existing Claude instances in this directory
          (existing-buffers (claude-code--find-claude-buffers-for-directory dir))
          ;; Determine instance name
@@ -549,7 +552,7 @@ With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue
       ;; run start hooks and show the claude buffer
       (run-hooks 'claude-code-start-hook)
       (display-buffer buffer))
-    (when arg
+    (when switch-after
       (switch-to-buffer buffer))))
 
 (defun claude-code--format-errors-at-point ()

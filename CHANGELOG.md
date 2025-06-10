@@ -14,10 +14,15 @@ All notable changes to claude-code.el will be documented in this file.
 - Instance memory: Your Claude instance selections are remembered per directory during the current Emacs session
 - Simplified startup behavior: `claude-code` now automatically detects the appropriate directory (project root, current file directory, or default directory)
 - Added prefix arg support to `claude-code-switch-to-buffer` - use `C-u` to see all Claude instances across all directories
+- Added prefix arg support to `claude-code-kill` - use `C-u` to kill ALL Claude instances across all directories
 
 ### Changed
 
 - Claude buffer names now use abbreviated file paths for better readability (e.g., `*claude:~/projects/myapp*`)
+- Reorganized prefix arguments for `claude-code` command:
+  - Single prefix (`C-u`) now switches to buffer after creating (more commonly used)
+  - Double prefix (`C-u C-u`) continues previous conversation (unchanged)
+  - Triple prefix (`C-u C-u C-u`) prompts for project directory (previously single prefix)
 
 ### Removed
 
