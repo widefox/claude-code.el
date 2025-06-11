@@ -2,7 +2,13 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
-## [Unreleased]
+## [0.3.1]
+
+### Fixed
+
+- Fixed bug using `claude-code-send-command-with-context` and `claude-code-fix-error-at-point` when invoked outside of a project, where it incorrectly prompted for a project.
+
+## [0.3.0]
 
 ### Added
 
