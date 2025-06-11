@@ -24,6 +24,8 @@ All notable changes to claude-code.el will be documented in this file.
 
 ### Changed
 
+- Improved performance by reducing terminal reflows - Claude windows now only trigger terminal resizing when width changes, not height
+
 - Claude buffer names now use abbreviated file paths for better readability (e.g., `*claude:~/projects/myapp*`)
 - Reorganized prefix arguments for `claude-code` command:
   - Single prefix (`C-u`) now switches to buffer after creating (more commonly used)
