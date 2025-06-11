@@ -398,6 +398,16 @@ the remembered directory->buffer associations."
                  (remhash dir claude-code--directory-buffer-map)))
              claude-code--directory-buffer-map)))
 
+(defun claude-code--get-buffer-file-name ()
+  "Get the file name associated with the current buffer.
+
+If in a project, return the file name relative to the project root."
+  (when buffer-file-name
+    (let ((project (project-current)))
+      (if project
+          (file-relative-name (buffer-file-name) (project-root project))
+        (abbreviate-file-name buffer-file-name)))))
+
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
 
@@ -704,8 +714,7 @@ With prefix ARG, switch to the Claude buffer after sending CMD."
 If region is active, include region line numbers.
 With prefix ARG, switch to the Claude buffer after sending CMD."
   (interactive "sClaude command: \nP")
-  (let* ((file-name (when (buffer-file-name)
-                        (file-relative-name (buffer-file-name) (project-root (project-current t)))))
+  (let* ((file-name (claude-code--get-buffer-file-name))
          (line-info (if (use-region-p)
                         (format "Lines: %d-%d"
                                 (line-number-at-pos (region-beginning))
@@ -764,13 +773,8 @@ as any system that implements help-at-pt.
 
 With prefix ARG, switch to the Claude buffer after sending."
   (interactive "P")
-  ;; (unless (bound-and-true-p flycheck-mode)
-  ;;   (message "Flycheck mode is not enabled in this buffer.")
-  ;;   (cl-return-from claude-code-fix-error-at-point))
-  
   (let* ((error-text (claude-code--format-errors-at-point))
-         (file-name (when (buffer-file-name)
-                      (file-relative-name (buffer-file-name) (project-root (project-current t))))))
+         (file-name (claude-code--get-buffer-file-name)))
     (if (string= error-text "No errors at point")
         (message "No errors found at point")
       (let ((command (format "Fix this error in %s:\nDo not run any external linter or other program, just fix the error at point using the context provided in the error message: <%s>"
