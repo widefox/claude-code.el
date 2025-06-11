@@ -480,11 +480,13 @@ possible, preventing the scrolling up issue when editing other buffers."
   "Hash table mapping windows to their last known widths.")
 
 (defun claude-code--eat-adjust-process-window-size-advice (orig-fun &rest args)
-  "Advice for `eat--adjust-process-window-size' to only signal on width changes.
+  "Advice for `eat--adjust-process-window-size' to only signal on width change.
 
-Returns the size only when the width of any Claude window has changed,
-not when only the height has changed. This prevents unnecessary terminal
-reflows when only vertical space changes."
+Returns the size returned by ORIG-FUN only when the width of any Claude
+window has changed, not when only the height has changed. This prevents
+unnecessary terminal reflows when only vertical space changes.
+
+ARGS is passed to ORIG-FUN unchanged."
   ;; Call the original function first
   (let ((result (apply orig-fun args)))
     ;; Check all windows for Claude buffers
