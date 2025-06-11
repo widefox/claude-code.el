@@ -45,10 +45,10 @@ You need to set your own key binding for the Claude Code command map. The exampl
 
 ### Basic Commands
 
-- `claude-code` (`C-c c c`) - Start Claude 
+- `claude-code` (`C-c c c`) - Start Claude. With prefix arg (`C-u`), switches to the Claude buffer after creating. With double prefix (`C-u C-u`), continues previous conversation. With triple prefix (`C-u C-u C-u`), prompts for the project directory
 - `claude-code-toggle` (`C-c c t`) - Toggle Claude window
-- `claude-code-switch-to-buffer` (`C-c c b`) - Switch to the Claude buffer
-- `claude-code-kill` (`C-c c k`) - Kill Claude session
+- `claude-code-switch-to-buffer` (`C-c c b`) - Switch to the Claude buffer. With prefix arg (`C-u`), shows all Claude instances across all directories
+- `claude-code-kill` (`C-c c k`) - Kill Claude session. With prefix arg (`C-u`), kills ALL Claude instances across all directories
 - `claude-code-send-command` (`C-c c s`) - Send command to Claude
 - `claude-code-send-command-with-context` (`C-c c x`) - Send command with current file and line context
 - `claude-code-send-region` (`C-c c r`) - Send the current region or buffer to Claude. With prefix arg (`C-u`), prompts for instructions to add to the text. With double prefix (`C-u C-u`), adds instructions and switches to Claude buffer
@@ -82,7 +82,7 @@ The command automatically detects the current mode and switches to the other:
 The `claude-code` command supports continuing previous conversations using Claude's `--continue`
 flag:
 
-- Double prefix arg (`C-u C-u C-c c c`) - Start Claude in project root and continue previous conversation
+- Double prefix arg (`C-u C-u C-c c c`) - Start Claude and continue previous conversation
 
 This allows you to resume where you left off in your previous Claude session.
 
@@ -116,12 +116,24 @@ The cursor appearance in read-only mode can be customized via the `claude-code-r
 #### Instance Management
 
 - When you start Claude with `claude-code`, it creates an instance for the current directory
-- Buffer names follow the format `*claude:/path/to/directory*` to clearly identify each instance
+- If a Claude instance already exists for the directory, you'll be prompted to name the new instance (e.g., "tests", "docs")
+- Buffer names follow the format:
+  - `*claude:/path/to/directory*` for the default instance
+  - `*claude:/path/to/directory:instance-name*` for named instances (e.g., `*claude:/home/user/project:tests*`)
 - If you're in a directory without a Claude instance but have instances running in other directories, you'll be prompted to select one
 - Your selection is remembered for that directory, so you won't be prompted again
 - To start a new instance instead of selecting an existing one, cancel the prompt with `C-g`
 
-This allows you to have separate Claude conversations for different projects while easily switching between them or sharing a Claude instance across related directories.
+#### Multiple Instances Per Directory
+
+You can run multiple Claude instances for the same directory to support different workflows:
+
+- The first instance in a directory is the "default" instance
+- Additional instances require a name when created (e.g., "tests", "docs", "refactor")
+- When multiple instances exist for a directory, commands that interact with Claude will prompt you to select which instance to use
+- Use `C-u claude-code-switch-to-buffer` to see all Claude instances across all directories (not just the current directory)
+
+This allows you to have separate Claude conversations for different aspects of your work within the same project, such as one instance for writing code and another for writing tests.
 
 ## Customization
 
