@@ -2,6 +2,12 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [0.3.2]
+
+### Fixed
+
+- Further reduce flickering by only telling the Claude process about window resize events when the _width_ of the Claude window has changed. When the width has changed, Claude needs to redraw the prompt input box. But when only the height has changed, Claude does not have to re-create everything. This greatly reduces flickering that can occur when editing while a Claude window is open in Emacs.
+
 ## [0.3.1]
 
 ### Fixed
@@ -23,6 +29,8 @@ All notable changes to claude-code.el will be documented in this file.
 - Added prefix arg support to `claude-code-kill` - use `C-u` to kill ALL Claude instances across all directories
 
 ### Changed
+
+- Improved performance by reducing terminal reflows - Claude windows now only trigger terminal resizing when width changes, not height
 
 - Claude buffer names now use abbreviated file paths for better readability (e.g., `*claude:~/projects/myapp*`)
 - Reorganized prefix arguments for `claude-code` command:

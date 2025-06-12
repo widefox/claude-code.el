@@ -476,16 +476,33 @@ possible, preventing the scrolling up issue when editing other buffers."
         (unless (pos-visible-in-window-p cursor-pos window)
           (set-window-start window term-beginning))))))
 
-(defun claude-code--on-window-configuration-change ()
-  "Handle window configuration change for Claude buffers.
+(defvar claude-code--window-widths (make-hash-table :test 'eq :weakness 'key)
+  "Hash table mapping windows to their last known widths.")
 
-Ensure all Claude buffers stay scrolled to the bottom when window
-configuration changes (e.g., when minibuffer opens/closes)."
-  (dolist (claude-buffer (claude-code--find-all-claude-buffers))
-    (with-current-buffer claude-buffer
-      ;; Get all windows showing this Claude buffer
-      (when-let ((windows (get-buffer-window-list claude-buffer nil t)))
-        (claude-code--synchronize-scroll windows)))))
+(defun claude-code--eat-adjust-process-window-size-advice (orig-fun &rest args)
+  "Advice for `eat--adjust-process-window-size' to only signal on width change.
+
+Returns the size returned by ORIG-FUN only when the width of any Claude
+window has changed, not when only the height has changed. This prevents
+unnecessary terminal reflows when only vertical space changes.
+
+ARGS is passed to ORIG-FUN unchanged."
+  ;; Call the original function first
+  (let ((result (apply orig-fun args)))
+    ;; Check all windows for Claude buffers
+    (let ((width-changed nil))
+      (dolist (window (window-list))
+        (let ((buffer (window-buffer window)))
+          (when (and buffer (string-match-p "^\\*claude" (buffer-name buffer)))
+            (let ((current-width (window-width window))
+                  (stored-width (gethash window claude-code--window-widths)))
+              ;; Check if this is a new window or if width changed
+              (when (or (not stored-width) (/= current-width stored-width))
+                (setq width-changed t)
+                ;; Update stored width
+                (puthash window current-width claude-code--window-widths))))))
+      ;; Return result only if a Claude window width changed, otherwise nil
+      (if width-changed result nil))))
 
 (defun claude-code (&optional arg)
   "Start Claude in an eat terminal and enable `claude-code-mode'.
@@ -535,9 +552,9 @@ With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[univers
       (let ((process-adaptive-read-buffering nil))
         (condition-case nil
             (apply #'eat-make trimmed-buffer-name claude-code-program nil program-switches)
-            (error
-             (error "error starting claude")
-             (signal 'claude-start-error "error starting claude"))))
+          (error
+           (error "error starting claude")
+           (signal 'claude-start-error "error starting claude"))))
       
       ;; Set eat repl faces to inherit from claude-code-repl-face
       (claude-code--setup-repl-faces)
@@ -546,16 +563,16 @@ With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[univers
       (setq-local eat-enable-directory-tracking t
                   eat-enable-shell-command-history nil
                   eat-enable-shell-prompt-annotation nil)
+
+      ;; Add advice to only nottify claude on window width changes, to avoid uncessary flickering
+      (advice-add 'eat--adjust-process-window-size :around #'claude-code--eat-adjust-process-window-size-advice)
       
       ;; Set our custom synchronize scroll function
-      (setq-local eat--synchronize-scroll-function #'claude-code--synchronize-scroll)
+      ;; (setq-local eat--synchronize-scroll-function #'claude-code--synchronize-scroll)
 
       ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
       (sleep-for claude-code-startup-delay)
 
-      ;; Add window configuration change hook to keep buffer scrolled to bottom
-      (add-hook 'window-configuration-change-hook #'claude-code--on-window-configuration-change nil t)
-      
       ;; Add cleanup hook to remove directory mappings when buffer is killed
       (add-hook 'kill-buffer-hook #'claude-code--cleanup-directory-mapping nil t)
 
