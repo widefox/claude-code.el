@@ -2,6 +2,12 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [0.3.2]
+
+### Fixed
+
+- Further reduce flickering by only telling the Claude process about window resize events when the _width_ of the Claude window has changed. When the width has changed, Claude needs to redraw the prompt input box. But when only the height has changed, Claude does not have to re-create everything. This greatly reduces flickering that can occur when editing while a Claude window is open in Emacs.
+
 ## [0.3.1]
 
 ### Fixed
