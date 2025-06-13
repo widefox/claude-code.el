@@ -406,7 +406,7 @@ If in a project, return the file name relative to the project root."
     (let ((project (project-current)))
       (if project
           (file-relative-name (buffer-file-name) (project-root project))
-        (abbreviate-file-name buffer-file-name)))))
+        (file-truename buffer-file-name)))))
 
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
@@ -475,6 +475,17 @@ possible, preventing the scrolling up issue when editing other buffers."
         ;; Otherwise, only adjust window-start if cursor is not visible
         (unless (pos-visible-in-window-p cursor-pos window)
           (set-window-start window term-beginning))))))
+
+(defun claude-code--on-window-configuration-change ()
+  "Handle window configuration change for Claude buffers.
+
+Ensure all Claude buffers stay scrolled to the bottom when window
+configuration changes (e.g., when minibuffer opens/closes)."
+  (dolist (claude-buffer (claude-code--find-all-claude-buffers))
+    (with-current-buffer claude-buffer
+      ;; Get all windows showing this Claude buffer
+      (when-let ((windows (get-buffer-window-list claude-buffer nil t)))
+        (claude-code--synchronize-scroll windows)))))
 
 (defvar claude-code--window-widths (make-hash-table :test 'eq :weakness 'key)
   "Hash table mapping windows to their last known widths.")
@@ -568,8 +579,11 @@ With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[univers
       (advice-add 'eat--adjust-process-window-size :around #'claude-code--eat-adjust-process-window-size-advice)
       
       ;; Set our custom synchronize scroll function
-      ;; (setq-local eat--synchronize-scroll-function #'claude-code--synchronize-scroll)
+      (setq-local eat--synchronize-scroll-function #'claude-code--synchronize-scroll)
 
+      ;; Add window configuration change hook to keep buffer scrolled to bottom
+      (add-hook 'window-configuration-change-hook #'claude-code--on-window-configuration-change nil t)
+      
       ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
       (sleep-for claude-code-startup-delay)
 

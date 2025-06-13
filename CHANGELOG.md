@@ -2,6 +2,12 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [0.3.3]
+
+### Fixed 
+
+- Fixed `claude-code-send-command-with-context` and `claude-code-fix-error-at-point` to use full absolute paths for files outside of projects, ensuring commands work correctly with non-project files.
+
 ## [0.3.2]
 
 ### Fixed
