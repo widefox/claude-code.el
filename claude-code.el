@@ -406,7 +406,7 @@ If in a project, return the file name relative to the project root."
     (let ((project (project-current)))
       (if project
           (file-relative-name (buffer-file-name) (project-root project))
-        (abbreviate-file-name buffer-file-name)))))
+        (file-truename buffer-file-name)))))
 
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
