@@ -399,14 +399,9 @@ the remembered directory->buffer associations."
              claude-code--directory-buffer-map)))
 
 (defun claude-code--get-buffer-file-name ()
-  "Get the file name associated with the current buffer.
-
-If in a project, return the file name relative to the project root."
+  "Get the file name associated with the current buffer."
   (when buffer-file-name
-    (let ((project (project-current)))
-      (if project
-          (file-relative-name (buffer-file-name) (project-root project))
-        (file-truename buffer-file-name)))))
+    (file-truename buffer-file-name)))
 
 (defun claude-code--do-send-command (cmd)
   "Send a command CMD to Claude if Claude buffer exists.
@@ -459,22 +454,24 @@ possible, preventing the scrolling up issue when editing other buffers."
     (if (eq window 'buffer)
         (goto-char (eat-term-display-cursor eat-terminal))
       ;; Instead of always setting window-start to the beginning,
-      ;; keep the prompt at the bottom of the window when possible
-      (let ((cursor-pos (eat-term-display-cursor eat-terminal))
-            (term-beginning (eat-term-display-beginning eat-terminal)))
-        ;; Set point first
-        (set-window-point window cursor-pos)
-        ;; Check if we should keep the prompt at the bottom
-        (when (and (>= cursor-pos (- (point-max) 2))
-                   (not (pos-visible-in-window-p cursor-pos window)))
-          ;; Recenter with point at bottom of window
-          (with-selected-window window
-            (save-excursion
-              (goto-char cursor-pos)
-              (recenter -1))))
-        ;; Otherwise, only adjust window-start if cursor is not visible
-        (unless (pos-visible-in-window-p cursor-pos window)
-          (set-window-start window term-beginning))))))
+      ;; keep the prompt at the bottom of the window when possible.
+      ;; Don't move the cursor around though when in eat-emacs-mode                                  
+      (when (not buffer-read-only)
+        (let ((cursor-pos (eat-term-display-cursor eat-terminal))
+              (term-beginning (eat-term-display-beginning eat-terminal)))
+          ;; Set point first
+          (set-window-point window cursor-pos)
+          ;; Check if we should keep the prompt at the bottom
+          (when (and (>= cursor-pos (- (point-max) 2))
+                     (not (pos-visible-in-window-p cursor-pos window)))
+            ;; Recenter with point at bottom of window
+            (with-selected-window window
+              (save-excursion
+                (goto-char cursor-pos)
+                (recenter -1))))
+          ;; Otherwise, only adjust window-start if cursor is not visible
+          (unless (pos-visible-in-window-p cursor-pos window)
+            (set-window-start window term-beginning)))))))
 
 (defun claude-code--on-window-configuration-change ()
   "Handle window configuration change for Claude buffers.
