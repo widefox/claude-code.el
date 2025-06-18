@@ -495,22 +495,23 @@ window has changed, not when only the height has changed. This prevents
 unnecessary terminal reflows when only vertical space changes.
 
 ARGS is passed to ORIG-FUN unchanged."
-  ;; Call the original function first
-  (let ((result (apply orig-fun args)))
-    ;; Check all windows for Claude buffers
-    (let ((width-changed nil))
-      (dolist (window (window-list))
-        (let ((buffer (window-buffer window)))
-          (when (and buffer (string-match-p "^\\*claude" (buffer-name buffer)))
-            (let ((current-width (window-width window))
-                  (stored-width (gethash window claude-code--window-widths)))
-              ;; Check if this is a new window or if width changed
-              (when (or (not stored-width) (/= current-width stored-width))
-                (setq width-changed t)
-                ;; Update stored width
-                (puthash window current-width claude-code--window-widths))))))
-      ;; Return result only if a Claude window width changed, otherwise nil
-      (if width-changed result nil))))
+  (when (and eat-terminal (eat-term-live-p eat-terminal))
+      ;; Call the original function first
+      (let ((result (apply orig-fun args)))
+        ;; Check all windows for Claude buffers
+        (let ((width-changed nil))
+          (dolist (window (window-list))
+            (let ((buffer (window-buffer window)))
+              (when (and buffer (string-match-p "^\\*claude" (buffer-name buffer)))
+                (let ((current-width (window-width window))
+                      (stored-width (gethash window claude-code--window-widths)))
+                  ;; Check if this is a new window or if width changed
+                  (when (or (not stored-width) (/= current-width stored-width))
+                    (setq width-changed t)
+                    ;; Update stored width
+                    (puthash window current-width claude-code--window-widths))))))
+          ;; Return result only if a Claude window width changed, otherwise nil
+          (if width-changed result nil)))))
 
 (defun claude-code (&optional arg)
   "Start Claude in an eat terminal and enable `claude-code-mode'.

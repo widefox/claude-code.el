@@ -2,6 +2,12 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [0.3.5]
+
+### Fixed
+
+- Potential fix for issue #29: check if eat process is still running before adjusting claude buffer window size
+
 ## [0.3.4]
 
 ### Fixed
