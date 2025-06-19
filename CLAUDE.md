@@ -20,7 +20,7 @@
 - Docstring for all functions and variables
   - Add a blank line after the first line of docstrings for multi-line descriptions
   - First line should be a complete sentence ending with a period
-- Maintain dependency requirements: Emacs 30.1+, transient 0.4.0+, eat 0.8+
+- Maintain dependency requirements: Emacs 30.1+, transient 0.7.5, eat 0.8+
 
 ## Error Handling
 - Use `if-let` for conditional execution with potential null values

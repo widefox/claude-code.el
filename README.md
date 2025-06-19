@@ -16,7 +16,7 @@ An Emacs interface for [Claude Code CLI](https://github.com/anthropics/claude-co
 
 - Emacs 30.0 or higher
 - [Claude Code CLI](https://github.com/anthropics/claude-code) installed and configured
-- Required Emacs packages: transient (0.4.0+), eat (0.9.2+)
+- Required Emacs packages: transient (0.7.5+), eat (0.9.2+)
 
 ### Using builtin use-package (Emacs 30+)
 

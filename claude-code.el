@@ -435,9 +435,6 @@ for consistent appearance."
   (dotimes (i 10)
     (let ((face (intern (format "eat-term-font-%d" i))))
       (funcall 'face-remap-add-relative face :inherit 'claude-code-repl-face)))
-  (dotimes (i 10)
-    (let ((face (intern (format "eat-term-font-%d" i))))
-      (funcall 'face-remap-add-relative face :inherit 'claude-code-repl-face)))
   (buffer-face-set :inherit 'claude-code-repl-face)
   (face-remap-add-relative 'nobreak-space :underline nil)
   (face-remap-add-relative 'eat-term-faint :foreground "#999999" :weight 'light))
@@ -526,7 +523,10 @@ With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue
 With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[universal-argument]), prompt for the project directory."
   (interactive "P")
   
-  ;; Forward declare variables to avoid compilation warnings
+  ;; Ensure the 'eat' library is loaded.
+  ;; Note: While `require` is used here, actual function/variable declarations
+  ;; from 'eat' that might cause compilation warnings if not known to the compiler
+  ;; are handled by `declare-function` calls at the top of the file or within specific scopes.
   (require 'eat)
   
   (let* ((dir (if (equal arg '(64))  ; Triple prefix
@@ -788,7 +788,7 @@ Sends <escape><escape> to the Claude Code REPL."
   (interactive)
   (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
       (with-current-buffer claude-code-buffer
-        (eat-term-send-string eat-terminal "")
+        (eat-term-send-string eat-terminal "")
         (display-buffer claude-code-buffer))
     (error "Claude is not running")))
 
