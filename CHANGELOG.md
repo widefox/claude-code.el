@@ -2,7 +2,7 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
-## [Unreleased]
+## [0.3.8]
 
 ### Added
 
