@@ -55,7 +55,7 @@ is displayed before Claude is fully initialized."
   :type 'number
   :group 'claude-code)
 
-(defcustom claude-code-large-buffer-threshold 1000
+(defcustom claude-code-large-buffer-threshold 100000
   "Size threshold in characters above which buffers are considered \"large\".
 
 When sending a buffer to Claude with `claude-code-send-region` and no
