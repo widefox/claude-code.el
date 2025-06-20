@@ -26,6 +26,7 @@
 (declare-function eat--set-cursor "eat" (terminal &rest args))
 (declare-function eat-term-display-cursor "eat" (terminal))
 (declare-function eat-term-display-beginning "eat" (terminal))
+(declare-function eat-term-live-p "eat" (terminal))
 
 ;;;; Customization options
 (defgroup claude-code nil
@@ -171,6 +172,7 @@ for each directory across multiple invocations.")
     (define-key map "1" 'claude-code-send-1)
     (define-key map "2" 'claude-code-send-2)
     (define-key map "3" 'claude-code-send-3)
+    (define-key map [tab] 'claude-code-cycle-mode)
     map)
   "Keymap for Claude commands.")
 
@@ -194,7 +196,8 @@ for each directory across multiple invocations.")
     ("n" "Send <escape> (\"No\")" claude-code-send-escape)
     ("1" "Send \"1\"" claude-code-send-1)
     ("2" "Send \"2\"" claude-code-send-2)
-    ("3" "Send \"3\"" claude-code-send-3)]])
+    ("3" "Send \"3\"" claude-code-send-3)
+    ("TAB" "Cycle Claude mode" claude-code-cycle-mode)]])
 
 
 ;;;###autoload (autoload 'claude-code-slash-commands "claude-code" nil t)
@@ -818,6 +821,21 @@ having to switch to the REPL buffer."
   (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
       (with-current-buffer claude-code-buffer
         (eat-term-send-string eat-terminal (kbd "ESC"))
+        (display-buffer claude-code-buffer))
+    (claude-code--show-not-running-message)))
+
+;;;###autoload
+(defun claude-code-cycle-mode ()
+  "Send Shift-Tab to Claude to cycle between modes.
+
+Claude uses Shift-Tab to cycle through:
+- Default mode
+- Auto-accept edits mode
+- Plan mode"
+  (interactive)
+  (if-let ((claude-code-buffer (claude-code--get-or-prompt-for-buffer)))
+      (with-current-buffer claude-code-buffer
+        (eat-term-send-string eat-terminal "\e[Z")
         (display-buffer claude-code-buffer))
     (claude-code--show-not-running-message)))
 

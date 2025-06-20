@@ -10,6 +10,7 @@ All notable changes to claude-code.el will be documented in this file.
   - `claude-code-send-1` (`C-c c 1`) - Send "1" to select first option in Claude menus
   - `claude-code-send-2` (`C-c c 2`) - Send "2" to select second option
   - `claude-code-send-3` (`C-c c 3`) - Send "3" to select third option
+- New `claude-code-cycle-mode` command (`C-c c TAB`) to send Shift-Tab to Claude for cycling between default mode, auto-accept edits mode, and plan mode
 - Added "Quick Responses" section to transient menu grouping numbered and yes/no responses
 
 ### Changed
