@@ -168,6 +168,9 @@ for each directory across multiple invocations.")
     (define-key map "x" 'claude-code-send-command-with-context)
     (define-key map "y" 'claude-code-send-return)
     (define-key map "z" 'claude-code-toggle-read-only-mode)
+    (define-key map "1" 'claude-code-send-1)
+    (define-key map "2" 'claude-code-send-2)
+    (define-key map "3" 'claude-code-send-3)
     map)
   "Keymap for Claude commands.")
 
@@ -185,10 +188,14 @@ for each directory across multiple invocations.")
     ("x" "Send command with context" claude-code-send-command-with-context)
     ("r" "Send region or buffer" claude-code-send-region)
     ("e" "Fix error at point" claude-code-fix-error-at-point)
-    ("y" "Send <return> to Claude (\"Yes\")" claude-code-send-return)
-    ("n" "Send <escape> to Claude (\"No\")" claude-code-send-escape)
     ("f" "Fork (jump to previous conversation" claude-code-fork)
-    ("/" "Slash Commands" claude-code-slash-commands)]])
+    ("/" "Slash Commands" claude-code-slash-commands)]
+   ["Quick Responses" ("y" "Send <return> (\"Yes\")" claude-code-send-return)
+    ("n" "Send <escape> (\"No\")" claude-code-send-escape)
+    ("1" "Send \"1\"" claude-code-send-1)
+    ("2" "Send \"2\"" claude-code-send-2)
+    ("3" "Send \"3\"" claude-code-send-3)]])
+
 
 ;;;###autoload (autoload 'claude-code-slash-commands "claude-code" nil t)
 (transient-define-prefix claude-code-slash-commands ()
@@ -202,14 +209,14 @@ for each directory across multiple invocations.")
     ("d" "Doctor" (lambda () (interactive) (claude-code--do-send-command "/doctor")))
     ("x" "Exit" (lambda () (interactive) (claude-code--do-send-command "/exit")))
     ("h" "Help" (lambda () (interactive) (claude-code--do-send-command "/help")))]
-   
+
    ["Special Commands"
     ("i" "Init" (lambda () (interactive) (claude-code--do-send-command "/init")))
     ("p" "PR" (lambda () (interactive) (claude-code--do-send-command "/pr")))
     ("r" "Release" (lambda () (interactive) (claude-code--do-send-command "/release")))
     ("b" "Bug" (lambda () (interactive) (claude-code--do-send-command "/bug")))
     ("v" "Review" (lambda () (interactive) (claude-code--do-send-command "/review")))]
-   
+
    ["Additional Commands"
     ("e" "Terminal" (lambda () (interactive) (claude-code--do-send-command "/terminal")))
     ("m" "Theme" (lambda () (interactive) (claude-code--do-send-command "/theme")))
@@ -222,7 +229,7 @@ for each directory across multiple invocations.")
 ;;;; Private util functions
 (defun claude-code--directory ()
   "Get get the root Claude directory for the current buffer.
-   
+
 If not in a project and no buffer file return `default-directory'."
   (let* ((project (project-current))
          (current-file (buffer-file-name)))
@@ -236,7 +243,7 @@ If not in a project and no buffer file return `default-directory'."
 
 (defun claude-code--find-all-claude-buffers ()
   "Find all active Claude buffers across all directories.
-   
+
 Returns a list of buffer objects."
   (cl-remove-if-not
    (lambda (buf)
@@ -245,7 +252,7 @@ Returns a list of buffer objects."
 
 (defun claude-code--find-claude-buffers-for-directory (directory)
   "Find all active Claude buffers for a specific DIRECTORY.
-   
+
 Returns a list of buffer objects."
   (cl-remove-if-not
    (lambda (buf)
@@ -257,7 +264,7 @@ Returns a list of buffer objects."
 
 (defun claude-code--extract-directory-from-buffer-name (buffer-name)
   "Extract the directory path from a Claude BUFFER-NAME.
-   
+
 For example, *claude:/path/to/project/* returns /path/to/project/.
 For example, *claude:/path/to/project/:tests* returns /path/to/project/."
   (when (string-match "^\\*claude:\\([^:]+\\)\\(?::\\([^*]+\\)\\)?\\*$" buffer-name)
@@ -265,7 +272,7 @@ For example, *claude:/path/to/project/:tests* returns /path/to/project/."
 
 (defun claude-code--extract-instance-name-from-buffer-name (buffer-name)
   "Extract the instance name from a Claude BUFFER-NAME.
-   
+
 For example, *claude:/path/to/project/:tests* returns \"tests\".
 For example, *claude:/path/to/project/* returns nil."
   (when (string-match "^\\*claude:\\([^:]+\\)\\(?::\\([^*]+\\)\\)?\\*$" buffer-name)
@@ -273,7 +280,7 @@ For example, *claude:/path/to/project/* returns nil."
 
 (defun claude-code--buffer-display-name (buffer)
   "Create a display name for Claude BUFFER.
-   
+
 Returns a formatted string like `project:instance (directory)' or
 `project (directory)'."
   (let* ((name (buffer-name buffer))
@@ -290,7 +297,7 @@ Returns a formatted string like `project:instance (directory)' or
 
 (defun claude-code--buffers-to-choices (buffers &optional simple-format)
   "Convert BUFFERS list to an alist of (display-name . buffer) pairs.
-   
+
 If SIMPLE-FORMAT is non-nil, use just the instance name as display name."
   (mapcar (lambda (buf)
             (let ((display-name (if simple-format
@@ -303,7 +310,7 @@ If SIMPLE-FORMAT is non-nil, use just the instance name as display name."
 
 (defun claude-code--select-buffer-from-choices (prompt buffers &optional simple-format)
   "Prompt user to select a buffer from BUFFERS list using PROMPT.
-   
+
 If SIMPLE-FORMAT is non-nil, use simplified display names.
 Returns the selected buffer or nil."
   (when buffers
@@ -315,7 +322,7 @@ Returns the selected buffer or nil."
 
 (defun claude-code--prompt-for-claude-buffer ()
   "Prompt user to select from available Claude buffers.
-   
+
 Returns the selected buffer or nil if canceled. If a buffer is selected,
 it's remembered for the current directory."
   (let* ((current-dir (claude-code--directory))
@@ -332,7 +339,7 @@ it's remembered for the current directory."
 
 (defun claude-code--get-or-prompt-for-buffer ()
   "Get Claude buffer for current directory or prompt for selection.
-   
+
 First checks for Claude buffers in the current directory. If there are
 multiple, prompts the user to select one. If there are none, checks if
 there's a remembered selection for this directory. If not, and there are
@@ -364,7 +371,7 @@ the buffer or nil."
 
 (defun claude-code--switch-to-selected-buffer (selected-buffer)
   "Switch to SELECTED-BUFFER if it's not the current buffer.
-   
+
 This is used after command functions to ensure we switch to the
 selected Claude buffer when the user chose a different instance."
   (when (and selected-buffer
@@ -373,7 +380,7 @@ selected Claude buffer when the user chose a different instance."
 
 (defun claude-code--buffer-name (&optional instance-name)
   "Generate the Claude buffer name based on project or current buffer file.
-   
+
 If INSTANCE-NAME is provided, include it in the buffer name.
 If not in a project and no buffer file, raise an error."
   (let ((dir (claude-code--directory)))
@@ -401,7 +408,7 @@ This function handles the proper cleanup sequence for a Claude buffer:
 
 (defun claude-code--cleanup-directory-mapping ()
   "Remove entries from directory-buffer map when this buffer is killed.
-   
+
 This function is added to `kill-buffer-hook' in Claude buffers to clean up
 the remembered directory->buffer associations."
   (let ((dying-buffer (current-buffer)))
@@ -467,7 +474,7 @@ possible, preventing the scrolling up issue when editing other buffers."
         (goto-char (eat-term-display-cursor eat-terminal))
       ;; Instead of always setting window-start to the beginning,
       ;; keep the prompt at the bottom of the window when possible.
-      ;; Don't move the cursor around though when in eat-emacs-mode                                  
+      ;; Don't move the cursor around though when in eat-emacs-mode
       (when (not buffer-read-only)
         (let ((cursor-pos (eat-term-display-cursor eat-terminal))
               (term-beginning (eat-term-display-beginning eat-terminal)))
@@ -537,10 +544,10 @@ With single prefix ARG (\\[universal-argument]), switch to buffer after creating
 With double prefix ARG (\\[universal-argument] \\[universal-argument]), continue previous conversation.
 With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[universal-argument]), prompt for the project directory."
   (interactive "P")
-  
+
   ;; Forward declare variables to avoid compilation warnings
   (require 'eat)
-  
+
   (let* ((dir (if (equal arg '(64))  ; Triple prefix
                   (read-directory-name "Project directory: ")
                 (claude-code--directory)))
@@ -576,7 +583,7 @@ With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[univers
           (error
            (error "error starting claude")
            (signal 'claude-start-error "error starting claude"))))
-      
+
       ;; Set eat repl faces to inherit from claude-code-repl-face
       (claude-code--setup-repl-faces)
 
@@ -587,13 +594,13 @@ With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[univers
 
       ;; Add advice to only nottify claude on window width changes, to avoid uncessary flickering
       (advice-add 'eat--adjust-process-window-size :around #'claude-code--eat-adjust-process-window-size-advice)
-      
+
       ;; Set our custom synchronize scroll function
       (setq-local eat--synchronize-scroll-function #'claude-code--synchronize-scroll)
 
       ;; Add window configuration change hook to keep buffer scrolled to bottom
       (add-hook 'window-configuration-change-hook #'claude-code--on-window-configuration-change nil t)
-      
+
       ;; fix wonky initial terminal layout that happens sometimes if we show the buffer before claude is ready
       (sleep-for claude-code-startup-delay)
 
@@ -687,7 +694,7 @@ If the Claude buffer doesn't exist, create it."
 ;;;###autoload
 (defun claude-code-switch-to-buffer (&optional arg)
   "Switch to the Claude buffer if it exists.
-   
+
 With prefix ARG, show all Claude instances across all directories."
   (interactive "P")
   (if arg
@@ -714,7 +721,7 @@ With prefix ARG, show all Claude instances across all directories."
 ;;;###autoload
 (defun claude-code-kill (&optional arg)
   "Kill Claude process and close its window.
-   
+
 With prefix ARG, kill ALL Claude processes across all directories."
   (interactive "P")
   (if arg
@@ -776,6 +783,30 @@ This is useful for saying Yes when Claude asks for confirmation without
 having to switch to the REPL buffer."
   (interactive)
   (claude-code--do-send-command ""))
+
+;;;###autoload
+(defun claude-code-send-1 ()
+  "Send \"1\" to the Claude Code REPL.
+
+This selects the first option when Claude presents a numbered menu."
+  (interactive)
+  (claude-code--do-send-command "1"))
+
+;;;###autoload
+(defun claude-code-send-2 ()
+  "Send \"2\" to the Claude Code REPL.
+
+This selects the second option when Claude presents a numbered menu."
+  (interactive)
+  (claude-code--do-send-command "2"))
+
+;;;###autoload
+(defun claude-code-send-3 ()
+  "Send \"3\" to the Claude Code REPL.
+
+This selects the third option when Claude presents a numbered menu."
+  (interactive)
+  (claude-code--do-send-command "3"))
 
 ;;;###autoload
 (defun claude-code-send-escape ()

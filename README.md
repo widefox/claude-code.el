@@ -58,6 +58,9 @@ You need to set your own key binding for the Claude Code command map. The exampl
 - `claude-code-send-return` (`C-c c y`) - Send return key to Claude (useful for confirming with Claude without switching to the Claude REPL buffer)
 - `claude-code-send-escape` (`C-c c n`) - Send escape key to Claude (useful for saying "No" when Claude asks for confirmation without switching to the Claude REPL buffer)
 - `claude-code-fork` (`C-c c f`) - Fork conversation (jump to previous conversation by sending escape-escape to Claude)
+- `claude-code-send-1` (`C-c c 1`) - Send "1" to Claude (useful for selecting the first option when Claude presents a numbered menu)
+- `claude-code-send-2` (`C-c c 2`) - Send "2" to Claude (useful for selecting the second option when Claude presents a numbered menu)
+- `claude-code-send-3` (`C-c c 3`) - Send "3" to Claude (useful for selecting the third option when Claude presents a numbered menu)
 
 With a single prefix arg, `claude-code`, `claude-code-send-command` and
 `claude-code-send-command-with-context` will switch to the Claude terminal buffer after sending the

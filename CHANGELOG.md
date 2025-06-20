@@ -2,6 +2,28 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [0.3.7]
+
+### Added
+
+- New quick response commands for numbered menu selection:
+  - `claude-code-send-1` (`C-c c 1`) - Send "1" to select first option in Claude menus
+  - `claude-code-send-2` (`C-c c 2`) - Send "2" to select second option
+  - `claude-code-send-3` (`C-c c 3`) - Send "3" to select third option
+- Added "Quick Responses" section to transient menu grouping numbered and yes/no responses
+
+### Changed
+
+- Excluded experimental `sockets-mcp/` directory from version control via .gitignore
+
+## [0.3.6]
+
+### Changed
+
+- Added confirmation prompts before killing Claude instances to prevent accidental termination (thanks to [microamp](https://github.com/microamp))
+  - `claude-code-kill` now asks "Kill Claude instance?" before terminating
+  - With prefix arg (`C-u`), asks for confirmation before killing all instances
+
 ## [0.3.5]
 
 ### Fixed

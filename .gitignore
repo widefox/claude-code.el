@@ -11,3 +11,6 @@
 
 # Local pre-commit config
 .pre-commit-config.yaml
+
+# Experimental sockets/MCP directory
+sockets-mcp/
