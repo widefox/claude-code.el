@@ -124,6 +124,14 @@ The cursor appearance in read-only mode can be customized via the `claude-code-r
 - Your selection is remembered for that directory, so you won't be prompted again
 - To start a new instance instead of selecting an existing one, cancel the prompt with `C-g`
 
+#### Instance Selection
+
+Commands that operate on an instance (`claude-send-command`, `claude-code-switch-to-buffer`, `claude-code-kill`, etc.) will prompt you for the Claude instance if there is more than one instance associated with the current buffer's project.
+
+If the buffer file is not associated with a running Claude instance, you can select an instance running in a different project. This is useful when you want Claude to analyze dependent projects or files that you have checked out in sibling directories.
+
+Claude-code.el remembers which buffers are associated with which Claude instances, so you won't be repeatedly prompted. This association also helps claude-code.el "do the right thing" when killing a Claude process and deleting its associated buffer.
+
 #### Multiple Instances Per Directory
 
 You can run multiple Claude instances for the same directory to support different workflows:
