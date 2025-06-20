@@ -173,10 +173,10 @@ This allows you to have separate Claude conversations for different aspects of y
 ;; This helps prevent terminal layout issues if the buffer is displayed before Claude is fully ready
 (setq claude-code-startup-delay 0.2)
 
-;; Configure the buffer size threshold for confirmation prompt (default is 1000 characters)
+;; Configure the buffer size threshold for confirmation prompt (default is 100000 characters)
 ;; If a buffer is larger than this threshold, claude-code-send-region will ask for confirmation
 ;; before sending the entire buffer to Claude
-(setq claude-code-large-buffer-threshold 1000)
+(setq claude-code-large-buffer-threshold 100000)
 
 ;; Disable truncation of Claude output buffer (default is nil)
 ;; When set to t, claude-code.el can output display content without truncation
