@@ -215,9 +215,11 @@ To reduce flickering in the Claude buffer on window configuration changes, you c
   ;; reduce flickering
   (add-hook 'claude-code-start-hook
             (lambda ()
-              (setq-local eat-minimum-latency 0.08
-                          eat-maximum-latency 0.2)))
+              (setq-local eat-minimum-latency 0.033
+                          eat-maximum-latency 0.1)))
 ```
+
+_Note_: Recent changes to claude-code.el have fixed flickering issues, making customization of these latency values less necessary. 
 
 ## Demo
 
