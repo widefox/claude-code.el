@@ -128,6 +128,20 @@ BLINKING-FREQUENCY can be nil (no blinking) or a number."
            (const :tag "None" nil)))
   :group 'claude-code)
 
+(defcustom claude-code-never-truncate-claude-buffer nil
+  "When non-nil, disable truncation of Claude output buffer.
+
+By default, Eat will truncate the terminal scrollback buffer when it
+reaches a certain size.  This can cause Claude's output to be cut off
+when dealing with large responses.  Setting this to non-nil disables
+the scrollback size limit, allowing Claude to output unlimited content
+without truncation.
+
+Note: Disabling truncation may consume more memory for very large
+outputs."
+  :type 'boolean
+  :group 'claude-code)
+
 ;; Forward declare variables to avoid compilation warnings
 (defvar eat-terminal)
 (defvar eat-term-name)
@@ -580,6 +594,16 @@ With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[univers
     (with-current-buffer buffer
       (cd dir)
       (setq-local eat-term-name claude-code-term-name)
+
+      ;; Turn off shell integration, as we don't need it for Claude
+      (setq-local eat-enable-directory-tracking t
+                  eat-enable-shell-command-history nil
+                  eat-enable-shell-prompt-annotation nil)
+      
+      ;; Conditionally disable scrollback truncation
+      (when claude-code-never-truncate-claude-buffer
+        (setq-local eat-term-scrollback-size nil))
+
       (let ((process-adaptive-read-buffering nil))
         (condition-case nil
             (apply #'eat-make trimmed-buffer-name claude-code-program nil program-switches)
@@ -589,11 +613,6 @@ With triple prefix ARG (\\[universal-argument] \\[universal-argument] \\[univers
 
       ;; Set eat repl faces to inherit from claude-code-repl-face
       (claude-code--setup-repl-faces)
-
-      ;; Turn off shell integration, as we don't need it for Claude
-      (setq-local eat-enable-directory-tracking t
-                  eat-enable-shell-command-history nil
-                  eat-enable-shell-prompt-annotation nil)
 
       ;; Add advice to only nottify claude on window width changes, to avoid uncessary flickering
       (advice-add 'eat--adjust-process-window-size :around #'claude-code--eat-adjust-process-window-size-advice)

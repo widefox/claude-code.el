@@ -177,6 +177,11 @@ This allows you to have separate Claude conversations for different aspects of y
 ;; If a buffer is larger than this threshold, claude-code-send-region will ask for confirmation
 ;; before sending the entire buffer to Claude
 (setq claude-code-large-buffer-threshold 1000)
+
+;; Disable truncation of Claude output buffer (default is nil)
+;; When set to t, claude-code.el can output display content without truncation
+;; This is useful when working with large Claude buffers
+(setq claude-code-never-truncate-claude-buffer t)
 ```
 
 ### Customizing Window Position

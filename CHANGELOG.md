@@ -2,6 +2,15 @@
 
 All notable changes to claude-code.el will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- New `claude-code-never-truncate-claude-buffer` customization variable to disable truncation of Claude output buffer
+  - When set to `t`, disables Eat's scrollback size limit, allowing Claude to output unlimited content without truncation
+  - Useful when working with large Claude responses
+  - Defaults to `nil` to maintain backward compatibility
+
 ## [0.3.7]
 
 ### Added
