@@ -13,7 +13,6 @@ All notable changes to claude-code.el will be documented in this file.
 ### Fixed
 
 - Do not move to end of buffer when in eat-emacs-mode (read-only mode)
-- Always send absolute files paths as context to Claude
 
 ## [0.3.3]
 

@@ -207,6 +207,8 @@ everywhere else you can customize the `claude-code-repl-face`:
    '(claude-code-repl-face ((t (:family "JuliaMono")))))
 ```
 
+#### Using Your 
+
 ### Reducing Flickering on Window Configuration Changes
 
 To reduce flickering in the Claude buffer on window configuration changes, you can adjust eat latency variables in a hook. This reduces flickering at the cost of some increased latency:
@@ -227,7 +229,7 @@ _Note_: Recent changes to claude-code.el have fixed flickering issues, making cu
 
 ![Claude Code Emacs Demo](./demo.gif)
 
-This [demo](./demo.gif) shows claude-code.el in action, including toggling the Claude window visibility, accessing the transient menu, and sending commands with file context.
+This [demo](./demo.gif) shows claude-code.el in action, including accessing the transient menu, sending commands with file context, and fixing errors.
 
 ### Video Demo
 
