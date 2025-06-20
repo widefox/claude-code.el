@@ -177,14 +177,15 @@ This allows you to have separate Claude conversations for different aspects of y
 
 ### Customizing Window Position
 
-You can control how the Claude Code window appears using Emacs' `display-buffer-alist`. For example, to make the Claude window appear on the right side of your screen with 33% width:
+You can control how the Claude Code window appears using Emacs' `display-buffer-alist`. For example, to make the Claude window appear in a persistent side window on the right side of your screen with 33% width:
 
 ```elisp
 (add-to-list 'display-buffer-alist
-             '("^\\*claude"
-               (display-buffer-in-side-window)
-               (side . right)
-               (window-width . 0.33)))
+                 `("^\\*claude"
+                   (display-buffer-in-side-window)
+                   (side . right)
+                   (window-width . ,width)
+                   (window-parameters . ((no-delete-other-windows . t)))))
 ```
 
 This layout works best on wide screens.
